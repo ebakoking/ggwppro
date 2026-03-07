@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum PlayStyle {
+  TRYHARD
+  CHILL
+  COMPETITIVE
+  CASUAL
+  TEAM_PLAYER
+  EXPLORER
+}
+
+enum GameLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum SwipeAction {
+  LIKE
+  DISLIKE
+  PENTAKILL
+}
+
+enum GameCategory {
+  FPS
+  MOBA
+  RPG
+  BATTLE_ROYALE
+  SANDBOX
+  SPORTS
+  STRATEGY
+  OTHER
+}
+
+model User {
+  id                          String    @id @default(uuid())
+  email                       String    @unique
+  username                    String    @unique
+  passwordHash                String
+  refreshToken                String?
+  emailVerified               Boolean   @default(false)
+  emailVerificationToken      String?
+  emailVerificationExpiresAt  DateTime?
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+
+  profile        Profile?
+  userGames      UserGame[]
+  sentSwipes     Swipe[]       @relation("SwipeFrom")
+  receivedSwipes Swipe[]       @relation("SwipeTo")
+  matchesAsA     Match[]       @relation("MatchUserA")
+  matchesAsB     Match[]       @relation("MatchUserB")
+  sentMessages   Message[]     @relation("MessageSender")
+  forumPosts     ForumPost[]   @relation("PostAuthor")
+  forumComments  ForumComment[] @relation("CommentAuthor")
+  forumLikes     ForumLike[]
+
+  @@map("users")
+}
+
+model Profile {
+  id          String     @id @default(uuid())
+  userId      String     @unique
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  displayName String?
+  avatarUrl   String?
+  dateOfBirth DateTime?
+  gender      Gender?
+  playStyle   PlayStyle?
+  gameLevel   GameLevel?
+  usesMic     Boolean    @default(false)
+  bio         String?
+  isPremium        Boolean    @default(false)
+  premiumPlan      String?
+  premiumExpiresAt DateTime?
+  pentakillsLeft   Int        @default(0)
+  dailyLikesUsed   Int        @default(0)
+  lastLikeResetAt  DateTime   @default(now())
+
+  filterGender     String?
+  filterAgeMin     Int?
+  filterAgeMax     Int?
+  filterMicOnly    Boolean    @default(false)
+  filterPlayStyles String[]   @default([])
+  filterActivity   String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("profiles")
+}
+
+model GameCatalog {
+  id       String       @id @default(uuid())
+  name     String       @unique
+  slug     String       @unique
+  iconUrl  String?
+  category GameCategory
+
+  userGames  UserGame[]
+  swipes     Swipe[]
+  matches    Match[]
+  forumPosts ForumPost[]
+
+  @@map("game_catalog")
+}
+
+model UserGame {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId String
+  game   GameCatalog @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  rank       String?
+  role       String?
+  hoursPlayed Int?
+  note       String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gameId])
+  @@map("user_games")
+}
+
+model Swipe {
+  id        String      @id @default(uuid())
+  fromId    String
+  toId      String
+  from      User        @relation("SwipeFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to        User        @relation("SwipeTo", fields: [toId], references: [id], onDelete: Cascade)
+  action    SwipeAction
+  gameId    String
+  game      GameCatalog @relation(fields: [gameId], references: [id])
+  createdAt DateTime    @default(now())
+
+  @@unique([fromId, toId, gameId])
+  @@map("swipes")
+}
+
+model Match {
+  id        String      @id @default(uuid())
+  userAId   String
+  userBId   String
+  userA     User        @relation("MatchUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB     User        @relation("MatchUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  gameId    String
+  game      GameCatalog @relation(fields: [gameId], references: [id])
+  createdAt DateTime    @default(now())
+
+  messages  Message[]
+
+  @@unique([userAId, userBId, gameId])
+  @@map("matches")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  content   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([matchId, createdAt])
+  @@map("messages")
+}
+
+model ForumPost {
+  id           String      @id @default(uuid())
+  authorId     String
+  author       User        @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  gameId       String
+  game         GameCatalog @relation(fields: [gameId], references: [id])
+  title        String
+  content      String
+  linkUrl      String?
+  likeCount    Int         @default(0)
+  commentCount Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  comments ForumComment[]
+  likes    ForumLike[]
+
+  @@index([gameId, createdAt])
+  @@map("forum_posts")
+}
+
+model ForumComment {
+  id        String    @id @default(uuid())
+  postId    String
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User      @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime  @default(now())
+
+  @@index([postId, createdAt])
+  @@map("forum_comments")
+}
+
+model ForumLike {
+  id     String    @id @default(uuid())
+  postId String
+  post   ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("forum_likes")
+}
