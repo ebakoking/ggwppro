@@ -31,13 +31,13 @@ export class SwipeService {
             data: { dailyLikesUsed: 1, lastLikeResetAt: now },
           });
         } else {
-          if (profile.dailyLikesUsed >= 30) {
-            throw new BadRequestException('Günlük swipe limitine ulaştınız. Premium ile sınırsız keşfedin!');
-          }
-          await this.prisma.profile.update({
-            where: { userId: fromId },
+          const result = await this.prisma.profile.updateMany({
+            where: { userId: fromId, dailyLikesUsed: { lt: 30 } },
             data: { dailyLikesUsed: { increment: 1 } },
           });
+          if (result.count === 0) {
+            throw new BadRequestException('Günlük swipe limitine ulaştınız. Premium ile sınırsız keşfedin!');
+          }
         }
       }
     }

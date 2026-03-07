@@ -4,17 +4,15 @@ import {
   IsEnum,
   IsBoolean,
   IsDateString,
+  MaxLength,
 } from 'class-validator';
 import { Gender, PlayStyle, GameLevel } from '@prisma/client';
 
 export class UpdateProfileDto {
   @IsString()
   @IsOptional()
+  @MaxLength(50)
   displayName?: string;
-
-  @IsString()
-  @IsOptional()
-  avatarUrl?: string;
 
   @IsDateString()
   @IsOptional()
@@ -38,5 +36,6 @@ export class UpdateProfileDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(500)
   bio?: string;
 }

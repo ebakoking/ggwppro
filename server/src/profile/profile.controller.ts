@@ -59,15 +59,7 @@ export class ProfileController {
     return this.profileService.saveFilters(req.user.id, body);
   }
 
-  @Post('premium/activate')
-  activatePremium(@Req() req: any, @Body() body: { planId: string }) {
-    return this.profileService.activatePremium(req.user.id, body.planId);
-  }
-
-  @Post('pentakill/purchase')
-  purchasePentakill(@Req() req: any, @Body() body: { packageId: string }) {
-    return this.profileService.purchasePentakill(req.user.id, body.packageId);
-  }
+  /** @deprecated Doğrudan aktifleştirme kaldırıldı; IAP akışı kullanılmalı (POST /profile/iap/complete). */
 
   @Get(':userId')
   getProfileById(@Param('userId') userId: string) {

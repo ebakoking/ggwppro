@@ -8,13 +8,16 @@ import {
   Animated,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useIAP, getReceiptIOS, ErrorCode } from 'expo-iap';
 import { Colors, Fonts } from '@/constants/theme';
 import { profileApi } from '@/services/api';
 import { useProfileStore } from '@/stores/profileStore';
+import { IAP_PENTAKILL_SKUS } from '@/constants/iap';
 
 interface PurchaseCard {
   id: string;
@@ -26,10 +29,16 @@ interface PurchaseCard {
   isPopular?: boolean;
 }
 
+const PACKAGE_TO_SKU: Record<string, string> = {
+  single: 'com.ggwp.app.pentakill.single',
+  pack: 'com.ggwp.app.pentakill.pack',
+  series: 'com.ggwp.app.pentakill.series',
+};
+
 const PACKAGES: PurchaseCard[] = [
-  { id: 'single', title: 'Tekli Pentakill', amount: '1 Adet', count: 1, price: '₺29.90' },
-  { id: 'pack', title: 'Takim Savasi', amount: '5 Adet', count: 5, price: '₺119.90', badge: 'POPÜLER', isPopular: true },
-  { id: 'series', title: 'Pentakill Serisi', amount: '20 Adet', count: 20, price: '₺399.90', badge: 'EN İYİ FİYAT' },
+  { id: 'single', title: 'Tekli Pentakill', amount: '1 Adet', count: 1, price: '₺29.99' },
+  { id: 'pack', title: 'Takim Savasi', amount: '5 Adet', count: 5, price: '₺149.99', badge: 'POPÜLER', isPopular: true },
+  { id: 'series', title: 'Pentakill Serisi', amount: '20 Adet', count: 20, price: '₺399.99', badge: 'EN İYİ FİYAT' },
 ];
 
 export default function PentakillStore() {
@@ -40,6 +49,55 @@ export default function PentakillStore() {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const sparkle1 = useRef(new Animated.Value(0)).current;
   const sparkle2 = useRef(new Animated.Value(0)).current;
+
+  const {
+    connected,
+    products,
+    fetchProducts,
+    requestPurchase,
+    finishTransaction,
+  } = useIAP({
+    onPurchaseSuccess: async (purchase) => {
+      try {
+        if (Platform.OS !== 'ios') {
+          Alert.alert('Bilgi', 'Şu an sadece iOS destekleniyor.');
+          setLoading(false);
+          return;
+        }
+        const receipt = await getReceiptIOS();
+        if (!receipt) {
+          Alert.alert('Hata', 'Makbuz alınamadı.');
+          setLoading(false);
+          return;
+        }
+        const result = await profileApi.iapComplete('ios', purchase.productId, receipt) as { pentakillsLeft: number; added: number };
+        await fetchProfile();
+        await finishTransaction({ purchase, isConsumable: true });
+        setLoading(false);
+        const pkg = PACKAGES.find(p => PACKAGE_TO_SKU[p.id] === purchase.productId);
+        Alert.alert(
+          'Satın Alma Başarılı!',
+          `${pkg?.count ?? result.added} Pentakill eklendi.\nMevcut: ${result.pentakillsLeft}`,
+          [{ text: 'Tamam', onPress: () => router.back() }],
+        );
+      } catch (e: any) {
+        setLoading(false);
+        Alert.alert('Hata', e?.message || 'Satın alma başarısız.');
+      }
+    },
+    onPurchaseError: (error) => {
+      if (error.code !== ErrorCode.UserCancelled) {
+        Alert.alert('Satın alma hatası', error.message || 'İşlem iptal edildi.');
+      }
+      setLoading(false);
+    },
+  });
+
+  useEffect(() => {
+    if (connected) {
+      fetchProducts({ skus: [...IAP_PENTAKILL_SKUS], type: 'in-app' }).catch(() => {});
+    }
+  }, [connected]);
 
   useEffect(() => {
     Animated.loop(
@@ -67,20 +125,25 @@ export default function PentakillStore() {
 
   const pentakillsLeft = profile?.pentakillsLeft ?? 0;
 
+  const getPackagePrice = (pkgId: string) => {
+    const sku = PACKAGE_TO_SKU[pkgId];
+    const product = products?.find((p: { id: string }) => p.id === sku);
+    const displayPrice = (product as { displayPrice?: string })?.displayPrice;
+    if (displayPrice) return displayPrice;
+    return PACKAGES.find(p => p.id === pkgId)?.price ?? '';
+  };
+
   const handlePurchase = async () => {
+    const productId = PACKAGE_TO_SKU[selectedId];
+    if (!productId) return;
     setLoading(true);
     try {
-      const result = await profileApi.purchasePentakill(selectedId);
-      await fetchProfile();
-      const pkg = PACKAGES.find(p => p.id === selectedId);
-      Alert.alert(
-        'Satın Alma Başarılı!',
-        `${pkg?.count ?? result.added} Pentakill eklendi.\nMevcut: ${result.pentakillsLeft}`,
-        [{ text: 'Tamam', onPress: () => router.back() }],
-      );
+      await requestPurchase({
+        request: { apple: { sku: productId }, google: { skus: [productId] } },
+        type: 'in-app',
+      });
     } catch (e: any) {
-      Alert.alert('Hata', e.message || 'Satın alma başarısız.');
-    } finally {
+      Alert.alert('Hata', e?.message || 'Satın alma başlatılamadı.');
       setLoading(false);
     }
   };
@@ -158,7 +221,7 @@ export default function PentakillStore() {
                       <Text style={s.pkgTitle}>{pkg.title}</Text>
                       <Text style={s.pkgAmount}>{pkg.amount}</Text>
                     </View>
-                    <Text style={s.pkgPrice}>{pkg.price}</Text>
+                    <Text style={s.pkgPrice}>{getPackagePrice(pkg.id)}</Text>
                   </View>
                   {pkg.isPopular && <View style={s.pkgGlowOverlay} />}
                 </TouchableOpacity>

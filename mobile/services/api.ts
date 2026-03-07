@@ -211,6 +211,17 @@ export const profileApi = {
     });
   },
 
+  /** IAP: Apple/Google makbuzu ile satın almayı tamamla (Premium veya Pentakill). */
+  iapComplete(platform: string, productId: string, receiptData: string) {
+    return request<
+      | { isPremium: boolean; premiumPlan: string; premiumExpiresAt: string }
+      | { pentakillsLeft: number; added: number }
+    >('/profile/iap/complete', {
+      method: 'POST',
+      body: JSON.stringify({ platform, productId, receiptData }),
+    });
+  },
+
   async uploadAvatar(uri: string): Promise<{ avatarUrl: string }> {
     const formData = new FormData();
     formData.append('file', {
@@ -309,7 +320,7 @@ export const messageApi = {
     const formData = new FormData();
     formData.append('audio', {
       uri,
-      type: 'audio/m4a',
+      type: 'audio/mp4',
       name: 'voice.m4a',
     } as any);
     const res = await fetch(`${API_BASE}/messages/${matchId}/upload-voice`, {

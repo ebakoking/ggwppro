@@ -1,0 +1,11 @@
+{
+  "name": "ggwppro",
+  "private": true,
+  "scripts": {
+    "screenshots": "node scripts/generate-app-store-screenshots.js"
+  },
+  "devDependencies": {
+    "pdf-lib": "^1.17.1",
+    "puppeteer": "^23.0.0"
+  }
+}

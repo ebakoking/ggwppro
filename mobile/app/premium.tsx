@@ -8,13 +8,16 @@ import {
   Animated,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useIAP, getReceiptIOS, ErrorCode } from 'expo-iap';
 import { Colors, Fonts } from '@/constants/theme';
 import { profileApi } from '@/services/api';
 import { useProfileStore } from '@/stores/profileStore';
+import { IAP_PREMIUM_SKUS } from '@/constants/iap';
 
 interface Plan {
   id: string;
@@ -26,18 +29,23 @@ interface Plan {
   isPopular?: boolean;
 }
 
+const PLAN_TO_SKU: Record<string, string> = {
+  weekly: 'com.ggwp.app.premium.weekly',
+  monthly: 'com.ggwp.app.premium.monthly',
+};
+
 const PLANS: Plan[] = [
   {
     id: 'weekly',
     title: 'HAFTALIK\nPREMIUM',
-    price: '₺199.90',
+    price: '₺199.99',
     duration: '/hafta',
     features: ['Sınırsız keşfet', 'Profil görünürlüğü artışı'],
   },
   {
     id: 'monthly',
     title: 'AYLIK PREMIUM',
-    price: '₺399.90',
+    price: '₺399.99',
     duration: '/ay',
     badge: 'EN POPÜLER',
     features: ['Seni kimlerin beğendiğini gör', 'Gelişmiş filtreleme', 'Profil dopingi'],
@@ -65,12 +73,61 @@ const FEATURES = [
 
 export default function PremiumScreen() {
   const router = useRouter();
-  const { profile, fetchProfile } = useProfileStore();
+  const { fetchProfile } = useProfileStore();
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [loading, setLoading] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const sparkle1 = useRef(new Animated.Value(0)).current;
   const sparkle2 = useRef(new Animated.Value(0)).current;
+
+  const {
+    connected,
+    subscriptions,
+    fetchProducts,
+    requestPurchase,
+    finishTransaction,
+  } = useIAP({
+    onPurchaseSuccess: async (purchase) => {
+      try {
+        if (Platform.OS !== 'ios') {
+          Alert.alert('Bilgi', 'Şu an sadece iOS destekleniyor.');
+          setLoading(false);
+          return;
+        }
+        const receipt = await getReceiptIOS();
+        if (!receipt) {
+          Alert.alert('Hata', 'Makbuz alınamadı.');
+          setLoading(false);
+          return;
+        }
+        await profileApi.iapComplete('ios', purchase.productId, receipt);
+        await fetchProfile();
+        await finishTransaction({ purchase, isConsumable: false });
+        setLoading(false);
+        const plan = PLANS.find(p => PLAN_TO_SKU[p.id] === purchase.productId);
+        Alert.alert(
+          'Premium Aktif!',
+          `${plan?.title.replace('\n', ' ') ?? 'Premium'} planınız başarıyla aktif edildi.`,
+          [{ text: 'Harika!', onPress: () => router.back() }],
+        );
+      } catch (e: any) {
+        setLoading(false);
+        Alert.alert('Hata', e?.message || 'İşlem başarısız.');
+      }
+    },
+    onPurchaseError: (error) => {
+      if (error.code !== ErrorCode.UserCancelled) {
+        Alert.alert('Satın alma hatası', error.message || 'İşlem iptal edildi.');
+      }
+      setLoading(false);
+    },
+  });
+
+  useEffect(() => {
+    if (connected) {
+      fetchProducts({ skus: [...IAP_PREMIUM_SKUS], type: 'subs' }).catch(() => {});
+    }
+  }, [connected]);
 
   useEffect(() => {
     Animated.loop(
@@ -94,20 +151,46 @@ export default function PremiumScreen() {
     ).start();
   }, []);
 
+  const getPlanPrice = (planId: string) => {
+    const sku = PLAN_TO_SKU[planId];
+    const sub = subscriptions?.find((s: { id: string }) => s.id === sku);
+    const displayPrice = (sub as { displayPrice?: string })?.displayPrice;
+    if (displayPrice) return displayPrice;
+    return PLANS.find(p => p.id === planId)?.price ?? '';
+  };
+
   const handleSubscribe = async () => {
+    const productId = PLAN_TO_SKU[selectedPlan];
+    if (!productId) return;
     setLoading(true);
     try {
-      await profileApi.activatePremium(selectedPlan);
-      await fetchProfile();
-      const plan = PLANS.find(p => p.id === selectedPlan);
-      Alert.alert(
-        'Premium Aktif!',
-        `${plan?.title.replace('\n', ' ')} planınız başarıyla aktif edildi.`,
-        [{ text: 'Harika!', onPress: () => router.back() }],
-      );
+      if (Platform.OS === 'ios') {
+        await requestPurchase({
+          request: { apple: { sku: productId }, google: { skus: [productId] } },
+          type: 'subs',
+        });
+      } else {
+        const sub = subscriptions?.find((s: { id: string }) => s.id === productId);
+        const offers = (sub as any)?.subscriptionOfferDetailsAndroid;
+        if (offers?.length) {
+          await requestPurchase({
+            request: {
+              google: {
+                skus: [productId],
+                subscriptionOffers: [{ sku: productId, offerToken: offers[0].offerToken }],
+              },
+            },
+            type: 'subs',
+          });
+        } else {
+          await requestPurchase({
+            request: { apple: { sku: productId }, google: { skus: [productId] } },
+            type: 'subs',
+          });
+        }
+      }
     } catch (e: any) {
-      Alert.alert('Hata', e.message || 'İşlem başarısız.');
-    } finally {
+      Alert.alert('Hata', e?.message || 'Satın alma başlatılamadı.');
       setLoading(false);
     }
   };
@@ -171,7 +254,7 @@ export default function PremiumScreen() {
 
                   <Text style={s.planTitle}>{plan.title}</Text>
 
-                  <Text style={s.planPrice}>{plan.price}</Text>
+                  <Text style={s.planPrice}>{getPlanPrice(plan.id)}</Text>
                   <Text style={s.planDuration}>{plan.duration}</Text>
 
                   <View style={s.planFeatures}>

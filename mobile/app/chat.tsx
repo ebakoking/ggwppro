@@ -40,11 +40,12 @@ function VoicePlayButton({ audioUrl, label }: { audioUrl: string; label: string 
         setPlaying(false);
         return;
       }
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioUrl },
         { shouldPlay: true },
         (s) => {
-          if (s.isLoaded && s.didJustFinishAndNotReset) {
+          if (s.isLoaded && s.didJustFinish) {
             soundRef.current?.unloadAsync();
             soundRef.current = null;
             setPlaying(false);
@@ -167,12 +168,13 @@ export default function ChatScreen() {
         const secs = dur % 60;
         const label = `${mins}:${secs.toString().padStart(2, '0')}`;
         if (isLocalChat) {
-          addLocalMessage(localChatId, `🎤 Ses mesajı (${label})`, myProfile?.userId ?? 'me');
+          addLocalMessage(localChatId, `🎤 Ses mesajı (${label})`, myProfile?.userId ?? 'me', userId);
         } else if (matchId) {
           try {
             const { audioUrl } = await messageApi.uploadVoice(matchId, uri);
             sendMessage(matchId, `🎤 Ses mesajı (${label})`, { audioUrl });
-          } catch {
+          } catch (err: any) {
+            Alert.alert('Ses Gönderilemedi', err?.message || 'Ses mesajı yüklenemedi, metin olarak gönderildi.');
             sendMessage(matchId, `🎤 Ses mesajı (${label})`);
           }
         }

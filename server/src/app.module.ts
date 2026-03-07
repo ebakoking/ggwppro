@@ -13,8 +13,11 @@ import { MessageModule } from './message/message.module';
 import { ForumModule } from './forum/forum.module';
 import { ReportModule } from './report/report.module';
 import { NotificationModule } from './notification/notification.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { HealthController } from './health.controller';
 import { AdminModule } from './admin/admin.module';
+import { IapModule } from './iap/iap.module';
 
 @Module({
   imports: [
@@ -24,6 +27,7 @@ import { AdminModule } from './admin/admin.module';
     MailModule,
     AuthModule,
     ProfileModule,
+    IapModule,
     GameModule,
     DiscoverModule,
     SwipeModule,
@@ -35,5 +39,8 @@ import { AdminModule } from './admin/admin.module';
     AdminModule,
   ],
   controllers: [HealthController],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

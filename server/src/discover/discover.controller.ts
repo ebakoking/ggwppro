@@ -13,10 +13,11 @@ export class DiscoverController {
     @Query('gameId') gameId: string | undefined,
     @Query('limit') limit = '10',
   ) {
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 50);
     return this.discoverService.getDiscoverFeed(
       req.user.id,
       gameId || undefined,
-      parseInt(limit, 10),
+      safeLimit,
     );
   }
 }

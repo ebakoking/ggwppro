@@ -26,7 +26,12 @@ export class AdminController {
     if (!secret) {
       throw new UnauthorizedException('ADMIN_SECRET ortam değişkeni tanımlı değil');
     }
-    if (authHeader !== `Bearer ${secret}`) {
+    const expected = Buffer.from(`Bearer ${secret}`, 'utf-8');
+    const actual = Buffer.from(authHeader || '', 'utf-8');
+    if (
+      expected.length !== actual.length ||
+      !require('crypto').timingSafeEqual(expected, actual)
+    ) {
       throw new UnauthorizedException('Yetkisiz erişim');
     }
   }

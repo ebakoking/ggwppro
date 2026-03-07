@@ -74,15 +74,15 @@ export class ProfileService {
   };
 
   async usePentakill(userId: string) {
-    const profile = await this.prisma.profile.findUnique({ where: { userId } });
-    if (!profile || profile.pentakillsLeft <= 0) {
-      throw new BadRequestException('Pentakill hakkınız kalmadı.');
-    }
-    const updated = await this.prisma.profile.update({
-      where: { userId },
+    const result = await this.prisma.profile.updateMany({
+      where: { userId, pentakillsLeft: { gt: 0 } },
       data: { pentakillsLeft: { decrement: 1 } },
     });
-    return { pentakillsLeft: updated.pentakillsLeft };
+    if (result.count === 0) {
+      throw new BadRequestException('Pentakill hakkınız kalmadı.');
+    }
+    const profile = await this.prisma.profile.findUnique({ where: { userId } });
+    return { pentakillsLeft: profile!.pentakillsLeft };
   }
 
   async saveFilters(userId: string, filters: {

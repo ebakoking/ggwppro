@@ -70,6 +70,13 @@ export class MessageService {
   }
 
   async markAsRead(matchId: string, userId: string) {
+    const match = await this.prisma.match.findUnique({
+      where: { id: matchId },
+    });
+    if (!match) throw new NotFoundException('Match not found');
+    if (match.userAId !== userId && match.userBId !== userId)
+      throw new ForbiddenException('Not your match');
+
     await this.prisma.message.updateMany({
       where: {
         matchId,
@@ -88,7 +95,16 @@ export class MessageService {
     if (match.userAId !== userId && match.userBId !== userId)
       throw new ForbiddenException('Not your match');
 
-    if (!file?.buffer || !file.mimetype?.includes('audio')) {
+    if (!file?.buffer) {
+      throw new BadRequestException('Ses dosyası boş veya okunamadı.');
+    }
+    const isAudio =
+      file.mimetype?.includes('audio') ||
+      file.mimetype?.includes('video/mp4') ||
+      file.originalname?.endsWith('.m4a') ||
+      file.originalname?.endsWith('.mp3') ||
+      file.originalname?.endsWith('.caf');
+    if (!isAudio) {
       throw new BadRequestException('Geçerli bir ses dosyası yükleyin.');
     }
     if (!fs.existsSync(VOICE_DIR)) {
