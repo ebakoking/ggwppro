@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GGWP - Gizlilik Politikası</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0e1a; color: #e2e8f0; line-height: 1.7; padding: 24px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 { color: #22d3ee; font-size: 28px; margin-bottom: 8px; }
+    h2 { color: #67e8f9; font-size: 20px; margin-top: 32px; margin-bottom: 12px; }
+    p, li { margin-bottom: 12px; color: #cbd5e1; }
+    ul { padding-left: 24px; }
+    .date { color: #64748b; font-size: 14px; margin-bottom: 32px; }
+    a { color: #22d3ee; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>GGWP Gizlilik Politikası</h1>
+    <p class="date">Son güncelleme: 7 Mart 2026</p>
+
+    <p>GGWP ("biz", "uygulama") olarak kullanıcılarımızın gizliliğini önemsiyoruz. Bu politika, hangi verileri topladığımızı, nasıl kullandığımızı ve koruduğumuzu açıklar.</p>
+
+    <h2>1. Topladığımız Veriler</h2>
+    <ul>
+      <li><strong>Hesap bilgileri:</strong> E-posta adresi, kullanıcı adı, şifre (hash'lenmiş olarak saklanır).</li>
+      <li><strong>Profil bilgileri:</strong> Görüntü adı, doğum tarihi, cinsiyet, oyun tercihleri, biyografi, avatar seçimi.</li>
+      <li><strong>Kullanım verileri:</strong> Beğeni/beğenmeme tercihleri, eşleşmeler, sohbet mesajları.</li>
+      <li><strong>Cihaz bilgileri:</strong> Push bildirim token'ı (bildirim göndermek için).</li>
+    </ul>
+
+    <h2>2. Verilerin Kullanımı</h2>
+    <ul>
+      <li>Hesap oluşturma ve kimlik doğrulama.</li>
+      <li>Oyuncu eşleştirme ve uyumluluk puanı hesaplama.</li>
+      <li>Kullanıcılar arası mesajlaşma hizmeti sunma.</li>
+      <li>Push bildirimleri gönderme (yeni eşleşme, mesaj vb.).</li>
+      <li>Uygulama deneyimini iyileştirme.</li>
+    </ul>
+
+    <h2>3. Verilerin Saklanması ve Güvenliği</h2>
+    <ul>
+      <li>Şifreler <strong>bcrypt</strong> algoritmasıyla hash'lenerek saklanır; düz metin olarak asla saklanmaz.</li>
+      <li>Kimlik doğrulama JWT (JSON Web Token) ile yapılır.</li>
+      <li>Token'lar cihazda güvenli depolama (iOS Keychain / Android Keystore) kullanılarak saklanır.</li>
+      <li>Tüm iletişim HTTPS üzerinden şifrelenir.</li>
+      <li>Veriler güvenli bulut sunucularında barındırılır.</li>
+    </ul>
+
+    <h2>4. Verilerin Paylaşımı</h2>
+    <p>Kişisel verilerinizi üçüncü taraflarla <strong>satmayız veya paylaşmayız</strong>. Veriler yalnızca aşağıdaki durumlarda paylaşılabilir:</p>
+    <ul>
+      <li>Yasal zorunluluklar gereği (mahkeme kararı vb.).</li>
+      <li>Kullanıcının açık onayı ile.</li>
+    </ul>
+
+    <h2>5. Kullanıcı Hakları</h2>
+    <ul>
+      <li>Hesabınızı istediğiniz zaman silebilirsiniz.</li>
+      <li>Profil bilgilerinizi düzenleyebilir veya kaldırabilirsiniz.</li>
+      <li>Verilerinizin bir kopyasını talep edebilirsiniz.</li>
+      <li>Push bildirimlerini cihaz ayarlarından kapatabilirsiniz.</li>
+    </ul>
+
+    <h2>6. Çocukların Gizliliği</h2>
+    <p>GGWP, 18 yaşın altındaki bireylere yönelik değildir. 18 yaşından küçük kullanıcılar kayıt olamaz.</p>
+
+    <h2>7. Çerezler</h2>
+    <p>GGWP bir mobil uygulamadır ve tarayıcı çerezleri kullanmaz.</p>
+
+    <h2>8. Değişiklikler</h2>
+    <p>Bu gizlilik politikasını zaman zaman güncelleyebiliriz. Önemli değişiklikler uygulama içinden bildirilecektir.</p>
+
+    <h2>9. İletişim</h2>
+    <p>Gizlilik politikamız hakkında sorularınız için bize ulaşın:</p>
+    <p><strong>E-posta:</strong> <a href="mailto:ebatikkurt@gmail.com">ebatikkurt@gmail.com</a></p>
+  </div>
+</body>
+</html>
