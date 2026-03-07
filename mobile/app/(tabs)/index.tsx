@@ -66,13 +66,7 @@ function avatarFallback(gender?: string) {
   }
 }
 
-const DEMO: (Profile & { userId: string })[] = [
-  { id: 'd1', userId: 'demo-1', displayName: 'Asli', gender: 'FEMALE', playStyle: 'COMPETITIVE', usesMic: true, bio: 'Valorant oynamayı seviyorum! Takım oyuncusuyum, her gün akşam saatlerinde aktifim.', dateOfBirth: '2002-06-15', avatarUrl: 'https://images.unsplash.com/photo-1718056514261-bb037cfe6ddd?w=800', compatibilityScore: 98, user: { id: 'u1', username: 'asli', email: '', createdAt: '', updatedAt: '', userGames: [{ id: 'ug1', userId: 'u1', gameId: 'g1', game: { id: 'g1', name: 'Valorant', slug: 'valorant', category: 'FPS' } }, { id: 'ug2', userId: 'u1', gameId: 'g2', game: { id: 'g2', name: 'League of Legends', slug: 'lol', category: 'MOBA' } }] } as any },
-  { id: 'd2', userId: 'demo-2', displayName: 'NeonStriker', gender: 'MALE', playStyle: 'COMPETITIVE', usesMic: true, bio: 'FPS main. Ranked grind her gece.', dateOfBirth: '1999-03-22', avatarUrl: 'https://images.unsplash.com/photo-1618517048485-f125b94309a8?w=800', compatibilityScore: 95, user: { id: 'u2', username: 'neon', email: '', createdAt: '', updatedAt: '', userGames: [{ id: 'ug3', userId: 'u2', gameId: 'g1', game: { id: 'g1', name: 'CS:GO', slug: 'csgo', category: 'FPS' } }, { id: 'ug4', userId: 'u2', gameId: 'g3', game: { id: 'g3', name: 'Valorant', slug: 'valorant', category: 'FPS' } }] } as any },
-  { id: 'd3', userId: 'demo-3', displayName: 'Luna', gender: 'FEMALE', playStyle: 'CASUAL', usesMic: false, bio: 'Chill oynuyorum, eğlenmek için buradayım.', dateOfBirth: '2003-11-08', avatarUrl: 'https://images.unsplash.com/photo-1759701546957-0ac6e568bd9a?w=800', compatibilityScore: 87, user: { id: 'u3', username: 'luna', email: '', createdAt: '', updatedAt: '', userGames: [{ id: 'ug5', userId: 'u3', gameId: 'g4', game: { id: 'g4', name: 'League of Legends', slug: 'lol', category: 'MOBA' } }, { id: 'ug6', userId: 'u3', gameId: 'g5', game: { id: 'g5', name: 'Minecraft', slug: 'minecraft', category: 'SANDBOX' } }] } as any },
-  { id: 'd4', userId: 'demo-4', displayName: 'Cyber', gender: 'OTHER', playStyle: 'TEAM_PLAYER', usesMic: true, bio: 'Takım oyunu için buradayım.', dateOfBirth: '2001-07-30', avatarUrl: 'https://images.unsplash.com/photo-1613487971624-24f87ffdbfc5?w=800', compatibilityScore: 90, user: { id: 'u4', username: 'cyber', email: '', createdAt: '', updatedAt: '', userGames: [] } as any },
-  { id: 'd5', userId: 'demo-5', displayName: 'Diamond', gender: 'MALE', playStyle: 'COMPETITIVE', usesMic: true, bio: 'LoL Diamond. Duo arıyorum.', dateOfBirth: '2001-04-18', avatarUrl: 'https://images.unsplash.com/photo-1772371272167-0117a6573d58?w=800', compatibilityScore: 94, user: { id: 'u5', username: 'diamond', email: '', createdAt: '', updatedAt: '', userGames: [] } as any },
-];
+const DEMO: (Profile & { userId: string })[] = [];
 
 export default function DiscoverScreen() {
   const router = useRouter();

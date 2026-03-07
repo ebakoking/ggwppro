@@ -12,7 +12,7 @@ import { MatchModule } from './match/match.module';
 import { MessageModule } from './message/message.module';
 import { ForumModule } from './forum/forum.module';
 import { HealthController } from './health.controller';
-// seed controller removed after initial seeding
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -28,6 +28,7 @@ import { HealthController } from './health.controller';
     MatchModule,
     MessageModule,
     ForumModule,
+    AdminModule,
   ],
   controllers: [HealthController],
 })
