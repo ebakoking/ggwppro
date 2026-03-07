@@ -30,7 +30,7 @@ let DiscoverService = class DiscoverService {
         KADIN: 'FEMALE',
         DIGER: 'OTHER',
     };
-    async getDiscoverFeed(userId, gameId, limit = 10) {
+    async getDiscoverFeed(userId, gameId, limit = 20) {
         const myProfile = await this.prisma.profile.findUnique({
             where: { userId },
         });
@@ -40,24 +40,15 @@ let DiscoverService = class DiscoverService {
         });
         const myGameIds = myGames.map((g) => g.gameId);
         const alreadySwiped = await this.prisma.swipe.findMany({
-            where: { fromId: userId, ...(gameId ? { gameId } : {}) },
+            where: { fromId: userId },
             select: { toId: true },
         });
         const swipedIds = alreadySwiped.map((s) => s.toId);
-        const candidateUserGames = await this.prisma.userGame.findMany({
+        const candidates = await this.prisma.profile.findMany({
             where: {
-                ...(gameId ? { gameId } : {}),
                 userId: { notIn: [...swipedIds, userId] },
             },
-            select: { userId: true },
-            distinct: ['userId'],
-            take: limit * 4,
-        });
-        const candidateUserIds = [...new Set(candidateUserGames.map((ug) => ug.userId))];
-        if (candidateUserIds.length === 0)
-            return [];
-        const candidates = await this.prisma.profile.findMany({
-            where: { userId: { in: candidateUserIds } },
+            take: limit * 5,
             include: {
                 user: {
                     include: {
@@ -66,6 +57,8 @@ let DiscoverService = class DiscoverService {
                 },
             },
         });
+        if (candidates.length === 0)
+            return [];
         const hasPremiumFilters = myProfile?.isPremium && (myProfile.filterGender || myProfile.filterAgeMin != null ||
             myProfile.filterAgeMax != null || myProfile.filterMicOnly ||
             (myProfile.filterPlayStyles && myProfile.filterPlayStyles.length > 0) ||
