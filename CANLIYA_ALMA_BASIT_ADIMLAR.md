@@ -138,12 +138,12 @@ API’nin güvenli çalışması için iki rastgele “gizli anahtar” üretece
    - **Name:** `ggwp-api` (veya istediğin isim).
    - **Region:** Veritabanıyla aynı bölgeyi seç (örn. Frankfurt).
    - **Branch:** `main`.
-   - **Root Directory:** Bu alanı **mutlaka** doldur: `server` yaz. (Backend kodu `server` klasöründe.)
+   - **Root Directory:** Bu alanı **boş bırak** (Render’da dist’in taşınmaması sorununu önlemek için).
    - **Runtime:** **Node**.
    - **Build Command:** Şunu yaz:  
-     `npm install && npx prisma generate && npm run build`
+     `cd server && npm install && npx prisma generate && npm run build`
    - **Start Command:** Şunu yaz:  
-     `npx prisma migrate deploy && npm run start:prod`
+     `cd server && npx prisma migrate deploy && npm run start:prod`
 4. **Instance Type:** **Free** seçili olsun.
 5. **Environment Variables** (Ortam Değişkenleri) bölümüne gel. **Add Environment Variable** ile aşağıdakileri tek tek ekle:
 
