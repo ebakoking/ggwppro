@@ -9,6 +9,8 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { MessageService } from './message.service';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class MessageGateway
@@ -19,27 +21,49 @@ export class MessageGateway
 
   private userSockets = new Map<string, string>();
 
-  handleConnection(client: Socket) {
-    const userId = client.handshake.query.userId as string;
-    if (userId) {
+  constructor(
+    private messageService: MessageService,
+    private jwtService: JwtService,
+    private configService: ConfigService,
+  ) {}
+
+  async handleConnection(client: Socket) {
+    try {
+      const token =
+        (client.handshake.auth?.token as string) ||
+        (client.handshake.query.token as string);
+
+      if (!token) {
+        client.disconnect();
+        return;
+      }
+
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: this.configService.get('JWT_SECRET'),
+      });
+      const userId = payload.sub as string;
+
+      (client as any).userId = userId;
       this.userSockets.set(userId, client.id);
       client.join(`user:${userId}`);
+    } catch {
+      client.disconnect();
     }
   }
 
   handleDisconnect(client: Socket) {
-    const userId = client.handshake.query.userId as string;
+    const userId = (client as any).userId as string;
     if (userId) this.userSockets.delete(userId);
   }
-
-  constructor(private messageService: MessageService) {}
 
   @SubscribeMessage('sendMessage')
   async handleMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { matchId: string; content: string },
   ) {
-    const userId = client.handshake.query.userId as string;
+    const userId = (client as any).userId as string;
+    if (!userId) return;
+
     const message = await this.messageService.sendMessage(
       data.matchId,
       userId,

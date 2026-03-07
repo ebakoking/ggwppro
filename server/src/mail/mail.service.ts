@@ -52,7 +52,7 @@ export class MailService {
     `;
 
     if (!this.isConfigured()) {
-      console.log('[Mail] SMTP yapılandırılmadı – doğrulama e-postası atlanıyor:', to, 'Token:', token);
+      console.log('[Mail] SMTP yapılandırılmadı – doğrulama e-postası atlanıyor:', to);
       return true;
     }
 

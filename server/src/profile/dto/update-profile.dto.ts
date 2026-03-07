@@ -39,8 +39,4 @@ export class UpdateProfileDto {
   @IsString()
   @IsOptional()
   bio?: string;
-
-  @IsBoolean()
-  @IsOptional()
-  isPremium?: boolean;
 }

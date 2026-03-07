@@ -12,6 +12,7 @@ import { MatchModule } from './match/match.module';
 import { MessageModule } from './message/message.module';
 import { ForumModule } from './forum/forum.module';
 import { ReportModule } from './report/report.module';
+import { NotificationModule } from './notification/notification.module';
 import { HealthController } from './health.controller';
 import { AdminModule } from './admin/admin.module';
 
@@ -30,6 +31,7 @@ import { AdminModule } from './admin/admin.module';
     MessageModule,
     ForumModule,
     ReportModule,
+    NotificationModule,
     AdminModule,
   ],
   controllers: [HealthController],

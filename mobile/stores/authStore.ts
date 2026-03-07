@@ -1,11 +1,28 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import {
   authApi,
   setTokens,
   clearTokens,
   setOnTokenRefreshFailed,
 } from '@/services/api';
+
+async function saveTokensSecure(accessToken: string, refreshToken: string) {
+  await SecureStore.setItemAsync('accessToken', accessToken);
+  await SecureStore.setItemAsync('refreshToken', refreshToken);
+}
+
+async function getTokensSecure() {
+  const at = await SecureStore.getItemAsync('accessToken');
+  const rt = await SecureStore.getItemAsync('refreshToken');
+  return { accessToken: at, refreshToken: rt };
+}
+
+async function clearTokensSecure() {
+  await SecureStore.deleteItemAsync('accessToken');
+  await SecureStore.deleteItemAsync('refreshToken');
+}
 
 interface AuthState {
   userId: string | null;
@@ -44,12 +61,11 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         const data = await authApi.register(email, username, password, passwordConfirm);
         setTokens(data.accessToken, data.refreshToken, data.user.id);
+        await saveTokensSecure(data.accessToken, data.refreshToken);
         await AsyncStorage.multiSet([
           ['userId', data.user.id],
           ['username', data.user.username],
           ['email', data.user.email],
-          ['accessToken', data.accessToken],
-          ['refreshToken', data.refreshToken],
         ]);
         set({
           userId: data.user.id,
@@ -84,12 +100,11 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         const data = await authApi.login(username, password);
         setTokens(data.accessToken, data.refreshToken, data.user.id);
+        await saveTokensSecure(data.accessToken, data.refreshToken);
         await AsyncStorage.multiSet([
           ['userId', data.user.id],
           ['username', data.user.username],
           ['email', data.user.email],
-          ['accessToken', data.accessToken],
-          ['refreshToken', data.refreshToken],
         ]);
         set({
           userId: data.user.id,
@@ -121,24 +136,19 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         await authApi.logout();
       } catch {}
+      await clearTokensSecure();
       await AsyncStorage.multiRemove([
         'userId',
         'username',
         'email',
-        'accessToken',
-        'refreshToken',
       ]);
     },
 
     restoreSession: async () => {
-      const [[, uid], [, uname], [, em], [, at], [, rt]] =
-        await AsyncStorage.multiGet([
-          'userId',
-          'username',
-          'email',
-          'accessToken',
-          'refreshToken',
-        ]);
+      const [[, uid], [, uname], [, em]] =
+        await AsyncStorage.multiGet(['userId', 'username', 'email']);
+      const { accessToken: at, refreshToken: rt } = await getTokensSecure();
+
       if (uid && at && rt) {
         setTokens(at, rt, uid);
         set({

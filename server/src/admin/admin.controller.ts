@@ -22,7 +22,10 @@ export class AdminController {
   ) {}
 
   private checkAuth(authHeader: string | undefined) {
-    const secret = this.config.get('ADMIN_SECRET') || 'ggwp-admin-2026';
+    const secret = this.config.get('ADMIN_SECRET');
+    if (!secret) {
+      throw new UnauthorizedException('ADMIN_SECRET ortam değişkeni tanımlı değil');
+    }
     if (authHeader !== `Bearer ${secret}`) {
       throw new UnauthorizedException('Yetkisiz erişim');
     }

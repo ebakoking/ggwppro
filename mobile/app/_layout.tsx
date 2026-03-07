@@ -16,6 +16,7 @@ import {
 import * as SystemUI from 'expo-system-ui';
 import { Colors } from '@/constants/theme';
 import { useAuthStore } from '@/stores/authStore';
+import { useNotifications } from '@/hooks/useNotifications';
 
 SystemUI.setBackgroundColorAsync(Colors.background);
 
@@ -24,6 +25,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const segments = useSegments();
   const router = useRouter();
   const [ready, setReady] = useState(false);
+
+  useNotifications();
 
   useEffect(() => {
     useAuthStore.getState().restoreSession().then(() => setReady(true));

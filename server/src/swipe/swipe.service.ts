@@ -1,10 +1,14 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { SwipeAction } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class SwipeService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationService,
+  ) {}
 
   async swipe(
     fromId: string,
@@ -66,6 +70,15 @@ export class SwipeService {
           create: { userAId: a, userBId: b, gameId },
         });
         matched = true;
+
+        this.notifications
+          .sendPushToMany(
+            [fromId, toId],
+            'Yeni Eşleşme! 🎮',
+            'Birisiyle eşleştin! Hemen sohbete başla.',
+            { type: 'match' },
+          )
+          .catch(() => {});
       }
     }
 

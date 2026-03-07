@@ -7,12 +7,16 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationService } from '../notification/notification.service';
 
 const VOICE_DIR = path.join(process.cwd(), 'uploads', 'voice');
 
 @Injectable()
 export class MessageService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationService,
+  ) {}
 
   async getMessages(matchId: string, userId: string, cursor?: string) {
     const match = await this.prisma.match.findUnique({
@@ -44,7 +48,7 @@ export class MessageService {
     if (match.userAId !== senderId && match.userBId !== senderId)
       throw new ForbiddenException('Not your match');
 
-    return this.prisma.message.create({
+    const message = await this.prisma.message.create({
       data: {
         matchId,
         senderId,
@@ -54,6 +58,15 @@ export class MessageService {
       },
       include: { sender: { select: { id: true, username: true } } },
     });
+
+    const recipientId = match.userAId === senderId ? match.userBId : match.userAId;
+    const senderName = message.sender?.username || 'Birisi';
+    const preview = opts?.messageType === 'VOICE' ? '🎤 Ses mesajı' : (content?.slice(0, 50) || '');
+    this.notifications
+      .sendPush(recipientId, senderName, preview, { type: 'message', matchId })
+      .catch(() => {});
+
+    return message;
   }
 
   async markAsRead(matchId: string, userId: string) {

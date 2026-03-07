@@ -15,9 +15,9 @@ import {
 // Canlı: EXPO_PUBLIC_API_URL=https://api.ggwp.app/api (veya kendi sunucu URL'iniz).
 const API_BASE =
   process.env.EXPO_PUBLIC_API_URL ||
-  (__DEV__ ? 'http://192.168.1.10:3000/api' : 'https://api.ggwp.app/api');
+  (__DEV__ ? 'http://192.168.1.10:3000/api' : 'https://ggwp-api.onrender.com/api');
 
-const REQUEST_TIMEOUT_MS = 20000;
+const REQUEST_TIMEOUT_MS = 60000;
 
 function fetchWithTimeout(url: string, options: RequestInit & { timeout?: number } = {}): Promise<Response> {
   const { timeout = REQUEST_TIMEOUT_MS, ...fetchOpts } = options;
@@ -327,6 +327,16 @@ export const messageApi = {
 
   markAsRead(matchId: string) {
     return request<void>(`/messages/${matchId}/read`, { method: 'POST' });
+  },
+};
+
+// ─── Notifications ───────────────────────────────────
+export const notificationApi = {
+  registerToken(pushToken: string) {
+    return request<{ ok: boolean }>('/notifications/register-token', {
+      method: 'POST',
+      body: JSON.stringify({ pushToken }),
+    });
   },
 };
 

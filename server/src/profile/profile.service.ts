@@ -24,7 +24,13 @@ export class ProfileService {
     if (!profile) throw new NotFoundException('Profile not found');
 
     const { user, ...rest } = profile;
-    const { passwordHash, refreshToken, ...safeUser } = user;
+    const {
+      passwordHash,
+      refreshToken,
+      emailVerificationToken,
+      emailVerificationExpiresAt,
+      ...safeUser
+    } = user as any;
     return { ...rest, user: safeUser };
   }
 
@@ -130,7 +136,13 @@ export class ProfileService {
     if (!profile) throw new NotFoundException('Profile not found');
 
     const { user, ...rest } = profile;
-    const { passwordHash, refreshToken, ...safeUser } = user;
+    const {
+      passwordHash,
+      refreshToken,
+      emailVerificationToken,
+      emailVerificationExpiresAt,
+      ...safeUser
+    } = user as any;
     return { ...rest, user: safeUser };
   }
 }

@@ -124,7 +124,14 @@ export class DiscoverService {
       score = Math.min(score, 100);
 
       const { user, ...profile } = candidate;
-      const { passwordHash, refreshToken, ...safeUser } = user as any;
+      const {
+        passwordHash,
+        refreshToken,
+        emailVerificationToken,
+        emailVerificationExpiresAt,
+        email,
+        ...safeUser
+      } = user as any;
 
       return {
         ...profile,
