@@ -14,7 +14,14 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.ggwp.app"
+      "bundleIdentifier": "com.ggwp.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Ses mesajı kaydetmek için mikrofon erişimi gereklidir.",
+        "NSCameraUsageDescription": "Profil fotoğrafı çekmek için kamera erişimi gereklidir.",
+        "NSPhotoLibraryUsageDescription": "Profil fotoğrafı seçmek için fotoğraf galerisi erişimi gereklidir.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -30,6 +37,13 @@
     "plugins": [
       "expo-router",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a03e8bfb-aebd-444f-9155-13f303c9b705"
+      }
+    },
+    "owner": "cardmatch"
   }
 }
