@@ -153,6 +153,11 @@ API’nin güvenli çalışması için iki rastgele “gizli anahtar” üretece
    | `JWT_SECRET` | ADIM 6’da ilk ürettiğin 64 karakterlik anahtar. |
    | `JWT_REFRESH_SECRET` | ADIM 6’da ikinci ürettiğin 64 karakterlik anahtar. |
    | `PORT` | `3000` yaz. |
+   | `API_BASE_URL` | Web Service URL'in (örn. `https://ggwp-api.onrender.com`). E-posta doğrulama linki için. |
+   | `MAIL_HOST` | (Opsiyonel) SMTP sunucu. Gerçek mail için: Gmail `smtp.gmail.com`. |
+   | `MAIL_PORT` | (Opsiyonel) 587 veya 465. |
+   | `MAIL_USER` | (Opsiyonel) E-posta adresi. |
+   | `MAIL_PASS` | (Opsiyonel) E-posta şifresi veya uygulama şifresi. |
 
 6. **Advanced** (Gelişmiş) bölümüne gir. **Release Command** alanına şunu yaz:  
    `npx prisma migrate deploy`  

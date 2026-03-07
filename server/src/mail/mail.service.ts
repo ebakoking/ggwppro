@@ -31,9 +31,8 @@ export class MailService {
     username: string,
     token: string,
   ): Promise<boolean> {
-    const baseUrl =
-      this.config.get('FRONTEND_URL') || this.config.get('API_BASE_URL') || 'https://ggwp.app';
-    const verifyUrl = `${baseUrl}/auth/verify-email?token=${encodeURIComponent(token)}`;
+    const apiBase = (this.config.get('API_BASE_URL') || 'https://ggwp-api.onrender.com').replace(/\/$/, '');
+    const verifyUrl = `${apiBase}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
 
     const html = `
       <!DOCTYPE html>

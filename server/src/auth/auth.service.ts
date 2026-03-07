@@ -43,15 +43,22 @@ export class AuthService {
 
     const hash = await bcrypt.hash(dto.password, 12);
 
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + VERIFICATION_EXPIRY_HOURS * 60 * 60 * 1000);
+
     const user = await this.prisma.user.create({
       data: {
         email: dto.email.toLowerCase().trim(),
         username: normalizedUsername,
         passwordHash: hash,
         emailVerified: false,
+        emailVerificationToken: token,
+        emailVerificationExpiresAt: expiresAt,
         profile: { create: {} },
       },
     });
+
+    this.mail.sendVerificationEmail(user.email, user.username, token).catch(() => {});
 
     const tokens = await this.generateTokens(user.id, user.username);
     await this.updateRefreshToken(user.id, tokens.refreshToken);

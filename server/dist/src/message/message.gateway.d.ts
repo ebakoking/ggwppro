@@ -22,6 +22,8 @@ export declare class MessageGateway implements OnGatewayConnection, OnGatewayDis
         matchId: string;
         senderId: string;
         content: string;
+        messageType: string;
+        audioUrl: string | null;
         read: boolean;
     }>;
     handleJoinMatch(client: Socket, data: {

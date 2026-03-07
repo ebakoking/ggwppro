@@ -48,6 +48,8 @@ export declare class MatchController {
             matchId: string;
             senderId: string;
             content: string;
+            messageType: string;
+            audioUrl: string | null;
             read: boolean;
         };
     }[]>;

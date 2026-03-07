@@ -63,13 +63,38 @@ let AdminController = class AdminController {
     }
     async stats(auth) {
         this.checkAuth(auth);
-        const [totalUsers, totalMatches, totalMessages, totalPosts] = await Promise.all([
+        const [totalUsers, totalMatches, totalMessages, totalPosts, pendingReports] = await Promise.all([
             this.prisma.user.count(),
             this.prisma.match.count(),
             this.prisma.message.count(),
             this.prisma.forumPost.count(),
+            this.prisma.report.count({ where: { status: 'PENDING' } }),
         ]);
-        return { totalUsers, totalMatches, totalMessages, totalPosts };
+        return { totalUsers, totalMatches, totalMessages, totalPosts, pendingReports };
+    }
+    async listReports(auth, status) {
+        this.checkAuth(auth);
+        const reports = await this.prisma.report.findMany({
+            where: status ? { status } : undefined,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                reporter: {
+                    select: { id: true, username: true, email: true, profile: { select: { displayName: true } } },
+                },
+                reported: {
+                    select: { id: true, username: true, email: true, profile: { select: { displayName: true } } },
+                },
+            },
+        });
+        return { reports };
+    }
+    async updateReportStatus(auth, reportId, body) {
+        this.checkAuth(auth);
+        await this.prisma.report.update({
+            where: { id: reportId },
+            data: { status: body.status || 'REVIEWED' },
+        });
+        return { ok: true };
     }
     async seedBotsEndpoint(auth, count = '100') {
         this.checkAuth(auth);
@@ -102,6 +127,23 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "stats", null);
+__decorate([
+    (0, common_1.Get)('reports'),
+    __param(0, (0, common_1.Headers)('authorization')),
+    __param(1, (0, common_1.Query)('status')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "listReports", null);
+__decorate([
+    (0, common_1.Post)('reports/:reportId/status'),
+    __param(0, (0, common_1.Headers)('authorization')),
+    __param(1, (0, common_1.Param)('reportId')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "updateReportStatus", null);
 __decorate([
     (0, common_1.Post)('seed-bots'),
     __param(0, (0, common_1.Headers)('authorization')),

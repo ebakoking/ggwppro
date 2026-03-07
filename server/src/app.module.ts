@@ -11,6 +11,7 @@ import { SwipeModule } from './swipe/swipe.module';
 import { MatchModule } from './match/match.module';
 import { MessageModule } from './message/message.module';
 import { ForumModule } from './forum/forum.module';
+import { ReportModule } from './report/report.module';
 import { HealthController } from './health.controller';
 import { AdminModule } from './admin/admin.module';
 
@@ -28,6 +29,7 @@ import { AdminModule } from './admin/admin.module';
     MatchModule,
     MessageModule,
     ForumModule,
+    ReportModule,
     AdminModule,
   ],
   controllers: [HealthController],

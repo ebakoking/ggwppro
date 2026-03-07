@@ -30,6 +30,42 @@ export declare class AdminController {
         totalMatches: number;
         totalMessages: number;
         totalPosts: number;
+        pendingReports: number;
+    }>;
+    listReports(auth: string, status?: string): Promise<{
+        reports: ({
+            reporter: {
+                id: string;
+                email: string;
+                username: string;
+                profile: {
+                    displayName: string | null;
+                } | null;
+            };
+            reported: {
+                id: string;
+                email: string;
+                username: string;
+                profile: {
+                    displayName: string | null;
+                } | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            messageId: string | null;
+            matchId: string | null;
+            reason: string;
+            details: string | null;
+            status: string;
+            reporterId: string;
+            reportedId: string;
+        })[];
+    }>;
+    updateReportStatus(auth: string, reportId: string, body: {
+        status: string;
+    }): Promise<{
+        ok: boolean;
     }>;
     seedBotsEndpoint(auth: string, count?: string): Promise<{
         botsCreated: number;

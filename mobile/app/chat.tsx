@@ -22,9 +22,49 @@ import { useMessageStore } from '@/stores/messageStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
 import { getDefaultAvatarUrl } from '@/components/AvatarSelectModal';
+import { messageApi, reportApi, UPLOADS_BASE } from '@/services/api';
 
 const QUICK_REPLIES = ['Rank nedir?', 'Hangi oyun?', 'Hadi girelim! 🎮'];
 const REACTIONS = ['🔥', '👍', 'GG'];
+
+function VoicePlayButton({ audioUrl, label }: { audioUrl: string; label: string }) {
+  const [playing, setPlaying] = useState(false);
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  const togglePlay = async () => {
+    try {
+      if (playing && soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+        setPlaying(false);
+        return;
+      }
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: audioUrl },
+        { shouldPlay: true },
+        (s) => {
+          if (s.isLoaded && s.didJustFinishAndNotReset) {
+            soundRef.current?.unloadAsync();
+            soundRef.current = null;
+            setPlaying(false);
+          }
+        },
+      );
+      soundRef.current = sound;
+      setPlaying(true);
+    } catch {
+      setPlaying(false);
+    }
+  };
+
+  return (
+    <TouchableOpacity onPress={togglePlay} style={s.voiceBtn} activeOpacity={0.8}>
+      <Ionicons name={playing ? 'pause' : 'play'} size={20} color="#22d3ee" />
+      <Text style={s.voiceLabel}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
 
 export default function ChatScreen() {
   const router = useRouter();
@@ -126,11 +166,15 @@ export default function ChatScreen() {
         const mins = Math.floor(dur / 60);
         const secs = dur % 60;
         const label = `${mins}:${secs.toString().padStart(2, '0')}`;
-        const voiceContent = `🎤 Ses mesajı (${label})`;
         if (isLocalChat) {
-          addLocalMessage(localChatId, voiceContent, myProfile?.userId ?? 'me');
+          addLocalMessage(localChatId, `🎤 Ses mesajı (${label})`, myProfile?.userId ?? 'me');
         } else if (matchId) {
-          sendMessage(matchId, voiceContent);
+          try {
+            const { audioUrl } = await messageApi.uploadVoice(matchId, uri);
+            sendMessage(matchId, `🎤 Ses mesajı (${label})`, { audioUrl });
+          } catch {
+            sendMessage(matchId, `🎤 Ses mesajı (${label})`);
+          }
         }
       }
     } catch {
@@ -151,6 +195,48 @@ export default function ChatScreen() {
     router.back();
   };
 
+  const doReport = (reason?: string) => {
+    if (!otherUserId || isLocalChat) {
+      Alert.alert('Bilgi', 'Sadece eşleştiğiniz kullanıcıları raporlayabilirsiniz.');
+      return;
+    }
+    const sendReport = async (r: string) => {
+      try {
+        await reportApi.report({
+          reportedId: otherUserId,
+          reason: r,
+          matchId: matchId || undefined,
+        });
+        Alert.alert('Teşekkürler', 'Şikayetiniz admin panele iletildi. İncelenecektir.');
+      } catch {
+        Alert.alert('Hata', 'Şikayet gönderilemedi.');
+      }
+    };
+    if (Platform.OS === 'ios') {
+      Alert.prompt(
+        'Şikayet Sebebi',
+        'Neden şikayet ediyorsunuz?',
+        [
+          { text: 'İptal', style: 'cancel' },
+          { text: 'Gönder', onPress: (r) => r?.trim() && sendReport(r.trim()) },
+        ],
+        'plain-text',
+      );
+    } else {
+      Alert.alert(
+        'Şikayet Sebebi',
+        'Sebep seçin:',
+        [
+          { text: 'İptal', style: 'cancel' },
+          { text: 'Spam / Reklam', onPress: () => sendReport('Spam / Reklam') },
+          { text: 'Hakaret / Taciz', onPress: () => sendReport('Hakaret / Taciz') },
+          { text: 'Sahte hesap', onPress: () => sendReport('Sahte hesap') },
+          { text: 'Diğer', onPress: () => sendReport('Diğer') },
+        ],
+      );
+    }
+  };
+
   const showMenu = () => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
@@ -160,7 +246,7 @@ export default function ChatScreen() {
           cancelButtonIndex: 3,
         },
         (idx) => {
-          if (idx === 0) Alert.alert('Şikayet', 'Şikayet gönderildi.');
+          if (idx === 0) doReport();
           else if (idx === 1) Alert.alert('Engellendi', 'Kullanıcı engellendi.');
           else if (idx === 2) {
             Alert.alert('Sohbeti Bitir', 'Sohbet sonlandırılsın mı?', [
@@ -172,7 +258,7 @@ export default function ChatScreen() {
       );
     } else {
       Alert.alert('Seçenekler', undefined, [
-        { text: 'Şikayet Et', onPress: () => Alert.alert('Şikayet', 'Şikayet gönderildi.') },
+        { text: 'Şikayet Et', onPress: doReport },
         { text: 'Engelle', onPress: () => Alert.alert('Engellendi', 'Kullanıcı engellendi.') },
         {
           text: 'Sohbeti Bitir',
@@ -207,12 +293,13 @@ export default function ChatScreen() {
     }
   };
 
-  const isMe = (senderId: string) => senderId === myProfile?.userId;
+  const isMe = (senderId: string) => senderId === userId;
 
   const renderMessage = ({ item }: { item: (typeof currentMessages)[0] }) => {
     const me = isMe(item.senderId);
     const msgReactions = reactions[item.id] ?? [];
     const time = new Date(item.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    const isVoice = !!(item as any).audioUrl;
 
     return (
       <View style={[s.msgRow, me ? s.msgRowMe : s.msgRowThem]}>
@@ -223,7 +310,14 @@ export default function ChatScreen() {
         )}
         <View style={[s.msgCol, me ? s.msgColMe : s.msgColThem]}>
           <View style={[s.bubble, me ? s.bubbleMe : s.bubbleThem]}>
-            <Text style={s.bubbleText}>{item.content}</Text>
+            {isVoice ? (
+              <VoicePlayButton
+                audioUrl={(item as any).audioUrl?.startsWith('http') ? (item as any).audioUrl : UPLOADS_BASE + (item as any).audioUrl}
+                label={item.content || '🎤 Ses mesajı'}
+              />
+            ) : (
+              <Text style={s.bubbleText}>{item.content}</Text>
+            )}
             {msgReactions.length > 0 && (
               <View style={s.reactionsRow}>
                 {msgReactions.map((r, i) => (
@@ -437,6 +531,8 @@ const s = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.2)',
   },
   bubbleText: { fontSize: 14, color: '#fff', lineHeight: 20 },
+  voiceBtn: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  voiceLabel: { fontSize: 14, color: '#fff', fontWeight: '600' },
 
   reactionsRow: {
     flexDirection: 'row', gap: 4,

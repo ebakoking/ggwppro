@@ -290,21 +290,53 @@ export const matchApi = {
 };
 
 // ─── Messages ────────────────────────────────────────
+export const UPLOADS_BASE = API_BASE.replace(/\/api\/?$/, '');
+
 export const messageApi = {
   getMessages(matchId: string, cursor?: string) {
     const q = cursor ? `?cursor=${cursor}` : '';
     return request<Message[]>(`/messages/${matchId}${q}`);
   },
 
-  sendMessage(matchId: string, content: string) {
+  sendMessage(matchId: string, content: string, opts?: { audioUrl?: string }) {
     return request<Message>(`/messages/${matchId}`, {
       method: 'POST',
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, ...opts }),
     });
+  },
+
+  async uploadVoice(matchId: string, uri: string): Promise<{ audioUrl: string }> {
+    const formData = new FormData();
+    formData.append('audio', {
+      uri,
+      type: 'audio/m4a',
+      name: 'voice.m4a',
+    } as any);
+    const res = await fetch(`${API_BASE}/messages/${matchId}/upload-voice`, {
+      method: 'POST',
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text || 'Ses yüklemesi başarısız');
+    }
+    const data = await res.json();
+    return { audioUrl: UPLOADS_BASE + data.audioUrl };
   },
 
   markAsRead(matchId: string) {
     return request<void>(`/messages/${matchId}/read`, { method: 'POST' });
+  },
+};
+
+// ─── Report ──────────────────────────────────────────
+export const reportApi = {
+  report(data: { reportedId: string; reason: string; details?: string; matchId?: string; messageId?: string }) {
+    return request<{ id: string }>('/report', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 };
 

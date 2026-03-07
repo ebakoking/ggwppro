@@ -6,7 +6,8 @@ export declare class DiscoverController {
         user: any;
         compatibilityScore: number;
         id: string;
-        userId: string;
+        createdAt: Date;
+        updatedAt: Date;
         displayName: string | null;
         avatarUrl: string | null;
         dateOfBirth: Date | null;
@@ -27,7 +28,6 @@ export declare class DiscoverController {
         filterMicOnly: boolean;
         filterPlayStyles: string[];
         filterActivity: string | null;
-        createdAt: Date;
-        updatedAt: Date;
+        userId: string;
     }[]>;
 }

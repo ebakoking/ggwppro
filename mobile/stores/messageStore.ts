@@ -34,7 +34,7 @@ interface MessageState {
   getLocalChat: (chatId: string) => LocalChat | undefined;
   deleteLocalChat: (chatId: string, userId: string | null) => Promise<void>;
   loadMessages: (matchId: string) => Promise<void>;
-  sendMessage: (matchId: string, content: string) => Promise<void>;
+  sendMessage: (matchId: string, content: string, opts?: { audioUrl?: string }) => Promise<void>;
   addIncomingMessage: (message: Message) => void;
 }
 
@@ -126,9 +126,9 @@ export const useMessageStore = create<MessageState>((set, get) => ({
     }
   },
 
-  sendMessage: async (matchId, content) => {
+  sendMessage: async (matchId, content, opts) => {
     try {
-      const message = await messageApi.sendMessage(matchId, content);
+      const message = await messageApi.sendMessage(matchId, content, opts);
       set((state) => ({
         currentMessages: [...state.currentMessages, message],
       }));

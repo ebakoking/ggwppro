@@ -1,9 +1,14 @@
 import {
   Injectable,
+  BadRequestException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
+
+const VOICE_DIR = path.join(process.cwd(), 'uploads', 'voice');
 
 @Injectable()
 export class MessageService {
@@ -26,7 +31,12 @@ export class MessageService {
     });
   }
 
-  async sendMessage(matchId: string, senderId: string, content: string) {
+  async sendMessage(
+    matchId: string,
+    senderId: string,
+    content: string,
+    opts?: { messageType?: string; audioUrl?: string },
+  ) {
     const match = await this.prisma.match.findUnique({
       where: { id: matchId },
     });
@@ -35,7 +45,13 @@ export class MessageService {
       throw new ForbiddenException('Not your match');
 
     return this.prisma.message.create({
-      data: { matchId, senderId, content },
+      data: {
+        matchId,
+        senderId,
+        content: content || '',
+        messageType: opts?.messageType || 'TEXT',
+        audioUrl: opts?.audioUrl,
+      },
       include: { sender: { select: { id: true, username: true } } },
     });
   }
@@ -49,5 +65,27 @@ export class MessageService {
       },
       data: { read: true },
     });
+  }
+
+  async uploadVoice(matchId: string, userId: string, file: Express.Multer.File) {
+    const match = await this.prisma.match.findUnique({
+      where: { id: matchId },
+    });
+    if (!match) throw new NotFoundException('Match not found');
+    if (match.userAId !== userId && match.userBId !== userId)
+      throw new ForbiddenException('Not your match');
+
+    if (!file?.buffer || !file.mimetype?.includes('audio')) {
+      throw new BadRequestException('Geçerli bir ses dosyası yükleyin.');
+    }
+    if (!fs.existsSync(VOICE_DIR)) {
+      fs.mkdirSync(VOICE_DIR, { recursive: true });
+    }
+    const ext = file.mimetype.includes('mpeg') || file.mimetype.includes('mp3') ? '.mp3' : '.m4a';
+    const filename = `${matchId}-${userId}-${Date.now()}${ext}`;
+    const filepath = path.join(VOICE_DIR, filename);
+    fs.writeFileSync(filepath, file.buffer);
+    const audioUrl = `/uploads/voice/${filename}`;
+    return { audioUrl };
   }
 }

@@ -4,6 +4,7 @@ import {
   Post,
   Delete,
   Param,
+  Body,
   Headers,
   UnauthorizedException,
   NotFoundException,
@@ -69,13 +70,49 @@ export class AdminController {
   @Get('stats')
   async stats(@Headers('authorization') auth: string) {
     this.checkAuth(auth);
-    const [totalUsers, totalMatches, totalMessages, totalPosts] = await Promise.all([
+    const [totalUsers, totalMatches, totalMessages, totalPosts, pendingReports] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.match.count(),
       this.prisma.message.count(),
       this.prisma.forumPost.count(),
+      this.prisma.report.count({ where: { status: 'PENDING' } }),
     ]);
-    return { totalUsers, totalMatches, totalMessages, totalPosts };
+    return { totalUsers, totalMatches, totalMessages, totalPosts, pendingReports };
+  }
+
+  @Get('reports')
+  async listReports(
+    @Headers('authorization') auth: string,
+    @Query('status') status?: string,
+  ) {
+    this.checkAuth(auth);
+    const reports = await this.prisma.report.findMany({
+      where: status ? { status } : undefined,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        reporter: {
+          select: { id: true, username: true, email: true, profile: { select: { displayName: true } } },
+        },
+        reported: {
+          select: { id: true, username: true, email: true, profile: { select: { displayName: true } } },
+        },
+      },
+    });
+    return { reports };
+  }
+
+  @Post('reports/:reportId/status')
+  async updateReportStatus(
+    @Headers('authorization') auth: string,
+    @Param('reportId') reportId: string,
+    @Body() body: { status: string },
+  ) {
+    this.checkAuth(auth);
+    await this.prisma.report.update({
+      where: { id: reportId },
+      data: { status: body.status || 'REVIEWED' },
+    });
+    return { ok: true };
   }
 
   @Post('seed-bots')

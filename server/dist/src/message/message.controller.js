@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessageController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const message_service_1 = require("./message.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 let MessageController = class MessageController {
@@ -25,7 +26,16 @@ let MessageController = class MessageController {
         return this.messageService.getMessages(matchId, req.user.id, cursor);
     }
     sendMessage(matchId, req, body) {
-        return this.messageService.sendMessage(matchId, req.user.id, body.content);
+        const content = body.content ?? '';
+        const opts = body.audioUrl
+            ? { messageType: 'VOICE', audioUrl: body.audioUrl }
+            : undefined;
+        return this.messageService.sendMessage(matchId, req.user.id, content, opts);
+    }
+    uploadVoice(matchId, req, file) {
+        if (!file)
+            throw new common_1.BadRequestException('Ses dosyası gerekli.');
+        return this.messageService.uploadVoice(matchId, req.user.id, file);
     }
     markAsRead(matchId, req) {
         return this.messageService.markAsRead(matchId, req.user.id);
@@ -50,6 +60,16 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", void 0)
 ], MessageController.prototype, "sendMessage", null);
+__decorate([
+    (0, common_1.Post)(':matchId/upload-voice'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('audio', { limits: { fileSize: 10 * 1024 * 1024 } })),
+    __param(0, (0, common_1.Param)('matchId')),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], MessageController.prototype, "uploadVoice", null);
 __decorate([
     (0, common_1.Post)(':matchId/read'),
     __param(0, (0, common_1.Param)('matchId')),

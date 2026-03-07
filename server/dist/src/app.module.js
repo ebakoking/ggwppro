@@ -20,6 +20,7 @@ const swipe_module_1 = require("./swipe/swipe.module");
 const match_module_1 = require("./match/match.module");
 const message_module_1 = require("./message/message.module");
 const forum_module_1 = require("./forum/forum.module");
+const report_module_1 = require("./report/report.module");
 const health_controller_1 = require("./health.controller");
 const admin_module_1 = require("./admin/admin.module");
 let AppModule = class AppModule {
@@ -40,6 +41,7 @@ exports.AppModule = AppModule = __decorate([
             match_module_1.MatchModule,
             message_module_1.MessageModule,
             forum_module_1.ForumModule,
+            report_module_1.ReportModule,
             admin_module_1.AdminModule,
         ],
         controllers: [health_controller_1.HealthController],

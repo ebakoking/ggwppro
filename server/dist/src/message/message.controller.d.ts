@@ -13,10 +13,14 @@ export declare class MessageController {
         matchId: string;
         senderId: string;
         content: string;
+        messageType: string;
+        audioUrl: string | null;
         read: boolean;
     })[]>;
     sendMessage(matchId: string, req: any, body: {
-        content: string;
+        content?: string;
+        messageType?: string;
+        audioUrl?: string;
     }): Promise<{
         sender: {
             id: string;
@@ -28,7 +32,12 @@ export declare class MessageController {
         matchId: string;
         senderId: string;
         content: string;
+        messageType: string;
+        audioUrl: string | null;
         read: boolean;
+    }>;
+    uploadVoice(matchId: string, req: any, file: Express.Multer.File): Promise<{
+        audioUrl: string;
     }>;
     markAsRead(matchId: string, req: any): Promise<void>;
 }

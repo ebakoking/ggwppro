@@ -67,6 +67,8 @@ model User {
   forumPosts     ForumPost[]   @relation("PostAuthor")
   forumComments  ForumComment[] @relation("CommentAuthor")
   forumLikes     ForumLike[]
+  reportsSent    Report[]      @relation("ReportReporter")
+  reportsReceived Report[]     @relation("ReportReported")
 
   @@map("users")
 }
@@ -169,17 +171,36 @@ model Match {
 }
 
 model Message {
-  id        String   @id @default(uuid())
-  matchId   String
-  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  senderId  String
-  sender    User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  content   String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  matchId    String
+  match      Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  content    String   @default("")
+  messageType String  @default("TEXT")
+  audioUrl   String?
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
   @@index([matchId, createdAt])
   @@map("messages")
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  reporterId  String
+  reporter    User     @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedId  String
+  reported    User     @relation("ReportReported", fields: [reportedId], references: [id], onDelete: Cascade)
+  reason      String
+  details     String?
+  matchId     String?
+  messageId   String?
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+
+  @@index([reportedId, status])
+  @@map("reports")
 }
 
 model ForumPost {

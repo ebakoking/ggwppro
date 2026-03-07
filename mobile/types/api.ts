@@ -79,6 +79,8 @@ export interface Message {
   matchId: string;
   senderId: string;
   content: string;
+  messageType?: string;
+  audioUrl?: string;
   read: boolean;
   createdAt: string;
   sender?: { id: string; username: string };
