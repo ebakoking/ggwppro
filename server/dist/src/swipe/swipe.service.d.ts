@@ -6,11 +6,11 @@ export declare class SwipeService {
     swipe(fromId: string, toId: string, action: SwipeAction, gameId: string): Promise<{
         swipe: {
             id: string;
-            createdAt: Date;
-            gameId: string;
             fromId: string;
             toId: string;
             action: import(".prisma/client").$Enums.SwipeAction;
+            gameId: string;
+            createdAt: Date;
         };
         matched: boolean;
     }>;
@@ -22,6 +22,7 @@ export declare class SwipeService {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
+                userId: string;
                 displayName: string | null;
                 avatarUrl: string | null;
                 dateOfBirth: Date | null;
@@ -42,15 +43,14 @@ export declare class SwipeService {
                 filterMicOnly: boolean;
                 filterPlayStyles: string[];
                 filterActivity: string | null;
-                userId: string;
             } | null;
         };
     } & {
         id: string;
-        createdAt: Date;
-        gameId: string;
         fromId: string;
         toId: string;
         action: import(".prisma/client").$Enums.SwipeAction;
+        gameId: string;
+        createdAt: Date;
     })[]>;
 }

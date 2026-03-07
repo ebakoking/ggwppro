@@ -21,7 +21,7 @@ let SwipeService = class SwipeService {
     async swipe(fromId, toId, action, gameId) {
         if (fromId === toId)
             throw new common_1.BadRequestException('Cannot swipe yourself');
-        if (action === client_1.SwipeAction.LIKE) {
+        if (action !== client_1.SwipeAction.PENTAKILL) {
             const profile = await this.prisma.profile.findUnique({ where: { userId: fromId } });
             if (profile && !profile.isPremium) {
                 const now = new Date();
@@ -35,7 +35,7 @@ let SwipeService = class SwipeService {
                 }
                 else {
                     if (profile.dailyLikesUsed >= 30) {
-                        throw new common_1.BadRequestException('Günlük beğenme limitine ulaştınız. Premium ile sınırsız beğenin!');
+                        throw new common_1.BadRequestException('Günlük swipe limitine ulaştınız. Premium ile sınırsız keşfedin!');
                     }
                     await this.prisma.profile.update({
                         where: { userId: fromId },

@@ -43,8 +43,9 @@ export const useDiscoverStore = create<DiscoverState>((set, get) => ({
     try {
       const result = await swipeApi.swipe(current.userId, action, gameId);
       if (result.matched) set({ lastMatch: true, matchedProfile: current });
-    } catch {
+    } catch (err: any) {
       set({ currentIndex: currentIndex });
+      throw err;
     }
 
     if (nextIndex >= feed.length - 2) {

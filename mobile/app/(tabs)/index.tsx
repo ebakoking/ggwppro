@@ -145,6 +145,8 @@ export default function DiscoverScreen() {
     });
   }, [userId]);
 
+  const showLimitAlertRef = useRef(() => {});
+
   const doAction = useCallback(async (a: 'LIKE' | 'DISLIKE' | 'PENTAKILL') => {
     const currentCard = cardRef.current;
     if (a === 'PENTAKILL') {
@@ -161,16 +163,13 @@ export default function DiscoverScreen() {
       try {
         await swipe(a, effectiveGameId);
       } catch (err: any) {
-        if (err?.message?.includes('limit')) {
-          Alert.alert('Günlük Limit', 'Günlük 30 beğenme hakkınız doldu!\nPremium ile sınırsız beğenin.', [
-            { text: 'Premium Al', onPress: () => router.push('/premium' as any) },
-            { text: 'Tamam' },
-          ]);
+        if (err?.message?.includes('limit') || err?.message?.includes('swipe')) {
+          showLimitAlertRef.current();
         }
       }
     }
     if (a === 'PENTAKILL' || a === 'LIKE') fetchProfile();
-  }, [effectiveGameId, swipe, addHiddenDemo, fetchProfile, router]);
+  }, [effectiveGameId, swipe, addHiddenDemo, fetchProfile]);
 
   const fly = useCallback((x: number, y: number, a: 'LIKE' | 'DISLIKE' | 'PENTAKILL') => {
     if (busy.current) return;
@@ -182,17 +181,21 @@ export default function DiscoverScreen() {
     });
   }, [pan, doAction]);
 
+  const showLimitAlert = useCallback(() => {
+    Alert.alert('Günlük Limit', 'Günlük 30 swipe hakkınız doldu!\nPremium ile sınırsız keşfedin.', [
+      { text: 'Premium Al', onPress: () => router.push('/premium' as any) },
+      { text: 'Tamam' },
+    ]);
+  }, [router]);
+  showLimitAlertRef.current = showLimitAlert;
   const like = () => {
-    if (!isPremium && likesRemaining <= 0) {
-      Alert.alert('Günlük Limit', 'Günlük 30 beğenme hakkınız doldu!\nPremium ile sınırsız beğenin.', [
-        { text: 'Premium Al', onPress: () => router.push('/premium' as any) },
-        { text: 'Tamam' },
-      ]);
-      return;
-    }
+    if (!isPremium && likesRemaining <= 0) { showLimitAlert(); return; }
     fly(500, 0, 'LIKE');
   };
-  const dislike = () => fly(-500, 0, 'DISLIKE');
+  const dislike = () => {
+    if (!isPremium && likesRemaining <= 0) { showLimitAlert(); return; }
+    fly(-500, 0, 'DISLIKE');
+  };
   const pentakill = () => {
     if (pentakillsLeft <= 0) { router.push('/store' as any); return; }
     fly(0, -600, 'PENTAKILL');
@@ -225,7 +228,7 @@ export default function DiscoverScreen() {
   if (!card) {
     return (
       <SafeAreaView style={s.root} edges={['top']}>
-        <Header isPremium={isPremium} likesRemaining={likesRemaining} />
+        <Header isPremium={isPremium} />
         <View style={s.emptyWrap}>
           {isLoading ? <ActivityIndicator size="large" color={Colors.primary} /> : (
             <>
@@ -251,7 +254,7 @@ export default function DiscoverScreen() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
-      <Header isPremium={isPremium} likesRemaining={likesRemaining} />
+      <Header isPremium={isPremium} />
 
       {/* --- CARD --- */}
       <View style={s.cardArea}>
@@ -383,18 +386,12 @@ export default function DiscoverScreen() {
   );
 }
 
-function Header({ isPremium, likesRemaining }: { isPremium: boolean; likesRemaining: number }) {
+function Header({ isPremium }: { isPremium: boolean }) {
   const router = useRouter();
   return (
     <View style={s.header}>
       <View style={s.headerLeft}>
         <Text style={s.headerTitle}>KEŞFET</Text>
-        {!isPremium && (
-          <View style={s.likeBadge}>
-            <Ionicons name="heart" size={10} color="#ef4444" />
-            <Text style={s.likeBadgeTxt}>{likesRemaining}/30</Text>
-          </View>
-        )}
       </View>
       <TouchableOpacity activeOpacity={0.85} style={s.premiumWrap} onPress={() => router.push(isPremium ? '/filters' as any : '/premium' as any)}>
         <LinearGradient
@@ -419,8 +416,6 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   headerTitle: { fontFamily: Fonts.heading, fontSize: 18, fontWeight: '800', color: '#22d3ee', fontStyle: 'italic' },
-  likeBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(239,68,68,0.15)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 99 },
-  likeBadgeTxt: { fontSize: 11, fontWeight: '700', color: '#ef4444' },
   premiumWrap: { borderRadius: 999, overflow: 'hidden' },
   premiumGrad: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 },
   premiumTxt: { fontSize: 10, fontWeight: '800', color: '#000' },

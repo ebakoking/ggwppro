@@ -15,7 +15,7 @@ export class SwipeService {
     if (fromId === toId)
       throw new BadRequestException('Cannot swipe yourself');
 
-    if (action === SwipeAction.LIKE) {
+    if (action !== SwipeAction.PENTAKILL) {
       const profile = await this.prisma.profile.findUnique({ where: { userId: fromId } });
       if (profile && !profile.isPremium) {
         const now = new Date();
@@ -28,7 +28,7 @@ export class SwipeService {
           });
         } else {
           if (profile.dailyLikesUsed >= 30) {
-            throw new BadRequestException('Günlük beğenme limitine ulaştınız. Premium ile sınırsız beğenin!');
+            throw new BadRequestException('Günlük swipe limitine ulaştınız. Premium ile sınırsız keşfedin!');
           }
           await this.prisma.profile.update({
             where: { userId: fromId },

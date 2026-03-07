@@ -16,6 +16,7 @@ exports.AdminController = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const config_1 = require("@nestjs/config");
+const seed_bots_1 = require("./seed-bots");
 let AdminController = class AdminController {
     prisma;
     config;
@@ -70,6 +71,11 @@ let AdminController = class AdminController {
         ]);
         return { totalUsers, totalMatches, totalMessages, totalPosts };
     }
+    async seedBotsEndpoint(auth, count = '100') {
+        this.checkAuth(auth);
+        const result = await (0, seed_bots_1.seedBots)(this.prisma, Math.min(Number(count) || 100, 500));
+        return { ok: true, ...result };
+    }
     async deleteUser(auth, userId) {
         this.checkAuth(auth);
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -96,6 +102,14 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "stats", null);
+__decorate([
+    (0, common_1.Post)('seed-bots'),
+    __param(0, (0, common_1.Headers)('authorization')),
+    __param(1, (0, common_1.Query)('count')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "seedBotsEndpoint", null);
 __decorate([
     (0, common_1.Delete)('users/:userId'),
     __param(0, (0, common_1.Headers)('authorization')),

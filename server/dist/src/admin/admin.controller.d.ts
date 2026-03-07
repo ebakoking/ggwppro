@@ -31,6 +31,11 @@ export declare class AdminController {
         totalMessages: number;
         totalPosts: number;
     }>;
+    seedBotsEndpoint(auth: string, count?: string): Promise<{
+        botsCreated: number;
+        likesCreated: number;
+        ok: boolean;
+    }>;
     deleteUser(auth: string, userId: string): Promise<{
         ok: boolean;
         deleted: string;

@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { seedBots } from './seed-bots';
 
 @Controller('admin')
 export class AdminController {
@@ -75,6 +76,16 @@ export class AdminController {
       this.prisma.forumPost.count(),
     ]);
     return { totalUsers, totalMatches, totalMessages, totalPosts };
+  }
+
+  @Post('seed-bots')
+  async seedBotsEndpoint(
+    @Headers('authorization') auth: string,
+    @Query('count') count = '100',
+  ) {
+    this.checkAuth(auth);
+    const result = await seedBots(this.prisma, Math.min(Number(count) || 100, 500));
+    return { ok: true, ...result };
   }
 
   @Delete('users/:userId')
