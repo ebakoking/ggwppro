@@ -12,6 +12,7 @@ import { MatchModule } from './match/match.module';
 import { MessageModule } from './message/message.module';
 import { ForumModule } from './forum/forum.module';
 import { HealthController } from './health.controller';
+import { SeedController } from './seed.controller';
 
 @Module({
   imports: [
@@ -28,6 +29,6 @@ import { HealthController } from './health.controller';
     MessageModule,
     ForumModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, SeedController],
 })
 export class AppModule {}
