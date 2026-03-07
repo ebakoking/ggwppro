@@ -72,13 +72,14 @@ export class AuthService {
   }
 
   private async autoGreetNewUser(newUserId: string) {
-    const greeterBots = await this.prisma.user.findMany({
+    const allBots = await this.prisma.user.findMany({
       where: { email: { endsWith: '@ggwp.bot' } },
       select: { id: true },
-      orderBy: { email: 'asc' },
-      take: 30,
     });
-    if (greeterBots.length === 0) return;
+    if (allBots.length === 0) return;
+
+    const shuffled = allBots.sort(() => Math.random() - 0.5);
+    const greeterBots = shuffled.slice(0, Math.min(8, shuffled.length));
 
     const genelGame = await this.prisma.gameCatalog.findFirst({
       where: { slug: 'genel' },

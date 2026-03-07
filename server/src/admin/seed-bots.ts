@@ -131,14 +131,11 @@ export async function seedBots(prisma: PrismaService, count = 100) {
     created++;
   }
 
-  // İlk 30 bot (greeter) tüm gerçek kullanıcıları likelasın
+  // Her gerçek kullanıcıya rastgele 8 bot like atsın
   const botUsers = await prisma.user.findMany({
     where: { email: { endsWith: '@ggwp.bot' } },
-    select: { id: true, email: true },
-    orderBy: { email: 'asc' },
+    select: { id: true },
   });
-  const greeterBots = botUsers.slice(0, 30);
-  const otherBots = botUsers.slice(30);
 
   const realUsers = await prisma.user.findMany({
     where: { email: { not: { endsWith: '@ggwp.bot' } } },
@@ -149,28 +146,17 @@ export async function seedBots(prisma: PrismaService, count = 100) {
   const defaultGameId = genelGame?.id || allGames[0]?.id;
 
   let likesCreated = 0;
-  if (realUsers.length > 0 && defaultGameId) {
-    for (const bot of greeterBots) {
-      for (const real of realUsers) {
+  if (realUsers.length > 0 && defaultGameId && botUsers.length > 0) {
+    for (const real of realUsers) {
+      const shuffled = [...botUsers].sort(() => Math.random() - 0.5);
+      const greeters = shuffled.slice(0, Math.min(8, shuffled.length));
+      for (const bot of greeters) {
         await prisma.swipe.upsert({
           where: { fromId_toId_gameId: { fromId: bot.id, toId: real.id, gameId: defaultGameId } },
           update: {},
           create: { fromId: bot.id, toId: real.id, action: 'LIKE', gameId: defaultGameId },
         }).catch(() => {});
         likesCreated++;
-      }
-    }
-    for (const bot of otherBots) {
-      for (const real of realUsers) {
-        if (Math.random() < 0.3) {
-          const gameId = pick(allGames).id;
-          await prisma.swipe.upsert({
-            where: { fromId_toId_gameId: { fromId: bot.id, toId: real.id, gameId } },
-            update: {},
-            create: { fromId: bot.id, toId: real.id, action: 'LIKE', gameId },
-          }).catch(() => {});
-          likesCreated++;
-        }
       }
     }
   }
