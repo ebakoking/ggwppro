@@ -60,6 +60,8 @@ export class AuthService {
 
     this.mail.sendVerificationEmail(user.email, user.username, token).catch(() => {});
 
+    this.autoGreetNewUser(user.id).catch(() => {});
+
     const tokens = await this.generateTokens(user.id, user.username);
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -67,6 +69,40 @@ export class AuthService {
       user: { id: user.id, username: user.username, email: user.email },
       ...tokens,
     };
+  }
+
+  private async autoGreetNewUser(newUserId: string) {
+    const greeterBots = await this.prisma.user.findMany({
+      where: { email: { endsWith: '@ggwp.bot' } },
+      select: { id: true },
+      orderBy: { email: 'asc' },
+      take: 30,
+    });
+    if (greeterBots.length === 0) return;
+
+    const genelGame = await this.prisma.gameCatalog.findFirst({
+      where: { slug: 'genel' },
+    });
+    if (!genelGame) return;
+
+    for (const bot of greeterBots) {
+      await this.prisma.swipe.upsert({
+        where: {
+          fromId_toId_gameId: {
+            fromId: bot.id,
+            toId: newUserId,
+            gameId: genelGame.id,
+          },
+        },
+        update: {},
+        create: {
+          fromId: bot.id,
+          toId: newUserId,
+          action: 'LIKE',
+          gameId: genelGame.id,
+        },
+      }).catch(() => {});
+    }
   }
 
   async login(dto: LoginDto) {
