@@ -50,10 +50,12 @@ export class IapService {
       throw new BadRequestException('Makbuz doğrulanamadı.');
     }
 
-    const latestReceiptInfo = result.latest_receipt_info ?? result.receipt?.in_app ?? [];
+    const latestReceiptInfo = result.latest_receipt_info ?? [];
+    const inAppReceipts = result.receipt?.in_app ?? [];
+    const allTransactions = [...latestReceiptInfo, ...inAppReceipts];
 
     if (productId === 'restore') {
-      const activeSub = latestReceiptInfo.find((t: any) => {
+      const activeSub = allTransactions.find((t: any) => {
         const pid = t.product_id;
         if (!PREMIUM_PRODUCT_IDS[pid]) return false;
         const expiresMs = Number(t.expires_date_ms);
@@ -73,15 +75,25 @@ export class IapService {
       throw new BadRequestException('Geçersiz ürün.');
     }
 
-    const hasThisProduct = latestReceiptInfo.some(
+    const hasThisProduct = allTransactions.some(
       (t: any) => t.product_id === productId,
     );
-    if (!hasThisProduct) {
+
+    if (planId) {
+      if (hasThisProduct) {
+        return this.profileService.activatePremium(userId, planId);
+      }
+      const anyActiveSub = allTransactions.find((t: any) => {
+        return PREMIUM_PRODUCT_IDS[t.product_id] && Number(t.expires_date_ms) > Date.now();
+      });
+      if (anyActiveSub) {
+        return this.profileService.activatePremium(userId, PREMIUM_PRODUCT_IDS[anyActiveSub.product_id]);
+      }
       throw new BadRequestException('Bu ürün bu makbuzda bulunamadı.');
     }
 
-    if (planId) {
-      return this.profileService.activatePremium(userId, planId);
+    if (!hasThisProduct) {
+      throw new BadRequestException('Bu ürün bu makbuzda bulunamadı.');
     }
     return this.profileService.purchasePentakill(userId, packageId!);
   }

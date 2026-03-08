@@ -115,10 +115,27 @@ export default function PremiumScreen() {
         Alert.alert('Hata', e?.message || 'İşlem başarısız.');
       }
     },
-    onPurchaseError: (error) => {
-      if (error.code !== ErrorCode.UserCancelled) {
-        Alert.alert('Satın alma hatası', error.message || 'İşlem iptal edildi.');
+    onPurchaseError: async (error) => {
+      if (error.code === ErrorCode.UserCancelled) {
+        setLoading(false);
+        return;
       }
+      const msg = error.message?.toLowerCase() ?? '';
+      if (msg.includes('already owned') || msg.includes('already subscribed')) {
+        try {
+          const receipt = await getReceiptIOS();
+          if (receipt) {
+            await profileApi.iapComplete('ios', 'restore', receipt);
+            await fetchProfile();
+            setLoading(false);
+            Alert.alert('Premium Aktif!', 'Mevcut aboneliğiniz geri yüklendi.', [
+              { text: 'Harika!', onPress: () => router.back() },
+            ]);
+            return;
+          }
+        } catch {}
+      }
+      Alert.alert('Satın alma hatası', error.message || 'İşlem iptal edildi.');
       setLoading(false);
     },
   });
