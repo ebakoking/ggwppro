@@ -128,8 +128,9 @@ export default function PentakillStore() {
   const getPackagePrice = (pkgId: string) => {
     const sku = PACKAGE_TO_SKU[pkgId];
     const product = products?.find((p: { id: string }) => p.id === sku);
-    const displayPrice = (product as { displayPrice?: string })?.displayPrice;
-    if (displayPrice) return displayPrice;
+    const displayPrice = (product as { displayPrice?: string; currencyCode?: string })?.displayPrice;
+    const currencyCode = (product as { currencyCode?: string })?.currencyCode;
+    if (displayPrice && currencyCode === 'TRY') return displayPrice;
     return PACKAGES.find(p => p.id === pkgId)?.price ?? '';
   };
 

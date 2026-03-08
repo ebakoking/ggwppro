@@ -3,7 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { Colors, Fonts, FontSize, Spacing } from '@/constants/theme';
+
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -29,7 +32,7 @@ export default function SettingsScreen() {
         </TouchableOpacity>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>UYGULAMA</Text>
-          <Text style={styles.version}>GGWP v1.0.0</Text>
+          <Text style={styles.version}>GGWP v{APP_VERSION}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

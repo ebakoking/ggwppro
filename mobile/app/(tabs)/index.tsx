@@ -86,6 +86,8 @@ export default function DiscoverScreen() {
   const busy = useRef(false);
   const pentaRef = useRef(pentakillsLeft);
   pentaRef.current = pentakillsLeft;
+  const effectiveGameIdRef = useRef(effectiveGameId);
+  effectiveGameIdRef.current = effectiveGameId;
 
   useEffect(() => { loadMyGames(); loadCatalog(); fetchProfile(); }, []);
   useEffect(() => { loadFeed(primaryGameId); }, [myGames.length, primaryGameId]);
@@ -159,27 +161,33 @@ export default function DiscoverScreen() {
         useDiscoverStore.setState({ lastMatch: true, matchedProfile: currentCard });
       }
       useDiscoverStore.setState({ currentIndex: 0 });
-    } else if (effectiveGameId) {
+    } else if (effectiveGameIdRef.current) {
       try {
-        await swipe(a, effectiveGameId);
+        await swipe(a, effectiveGameIdRef.current);
       } catch (err: any) {
-        if (err?.message?.includes('limit') || err?.message?.includes('swipe')) {
+        const msg = err?.message ?? '';
+        if (msg.includes('limit') || msg.includes('swipe') || msg.includes('Günlük')) {
           showLimitAlertRef.current();
+        } else {
+          Alert.alert('Hata', msg || 'İşlem başarısız oldu.');
         }
       }
     }
     if (a === 'PENTAKILL' || a === 'LIKE') fetchProfile();
-  }, [effectiveGameId, swipe, addHiddenDemo, fetchProfile]);
+  }, [swipe, addHiddenDemo, fetchProfile]);
 
   const fly = useCallback((x: number, y: number, a: 'LIKE' | 'DISLIKE' | 'PENTAKILL') => {
     if (busy.current) return;
     busy.current = true;
-    Animated.timing(pan, { toValue: { x, y }, duration: 300, useNativeDriver: true }).start(() => {
+    Animated.timing(pan, { toValue: { x, y }, duration: 300, useNativeDriver: false }).start(() => {
       doAction(a);
       pan.setValue({ x: 0, y: 0 });
       busy.current = false;
     });
   }, [pan, doAction]);
+
+  const flyRef = useRef(fly);
+  flyRef.current = fly;
 
   const showLimitAlert = useCallback(() => {
     Alert.alert('Günlük Limit', 'Günlük 30 swipe hakkınız doldu!\nPremium ile sınırsız keşfedin.', [
@@ -190,15 +198,14 @@ export default function DiscoverScreen() {
   showLimitAlertRef.current = showLimitAlert;
   const like = () => {
     if (!isPremium && likesRemaining <= 0) { showLimitAlert(); return; }
-    fly(500, 0, 'LIKE');
+    flyRef.current(500, 0, 'LIKE');
   };
   const dislike = () => {
-    if (!isPremium && likesRemaining <= 0) { showLimitAlert(); return; }
-    fly(-500, 0, 'DISLIKE');
+    flyRef.current(-500, 0, 'DISLIKE');
   };
   const pentakill = () => {
     if (pentakillsLeft <= 0) { router.push('/store' as any); return; }
-    fly(0, -600, 'PENTAKILL');
+    flyRef.current(0, -600, 'PENTAKILL');
   };
 
   const pr = useRef(
@@ -209,12 +216,12 @@ export default function DiscoverScreen() {
       onMoveShouldSetPanResponderCapture: (_, g) => !busy.current && (Math.abs(g.dx) > 5 || Math.abs(g.dy) > 5),
       onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
       onPanResponderRelease: (_, g) => {
-        if (g.dx > SWIPE_X) fly(500, g.dy, 'LIKE');
-        else if (g.dx < -SWIPE_X) fly(-500, g.dy, 'DISLIKE');
-        else if (g.dy < SWIPE_Y && pentaRef.current > 0) fly(g.dx, -600, 'PENTAKILL');
+        if (g.dx > SWIPE_X) flyRef.current(500, g.dy, 'LIKE');
+        else if (g.dx < -SWIPE_X) flyRef.current(-500, g.dy, 'DISLIKE');
+        else if (g.dy < SWIPE_Y && pentaRef.current > 0) flyRef.current(g.dx, -600, 'PENTAKILL');
         else {
           if (g.dy < SWIPE_Y && pentaRef.current <= 0) router.push('/store' as any);
-          Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: true, friction: 5 }).start();
+          Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false, friction: 5 }).start();
         }
       },
     })

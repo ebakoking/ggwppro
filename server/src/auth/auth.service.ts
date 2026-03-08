@@ -73,7 +73,12 @@ export class AuthService {
 
   private async autoGreetNewUser(newUserId: string) {
     const allBots = await this.prisma.user.findMany({
-      where: { email: { endsWith: '@ggwp.bot' } },
+      where: {
+        OR: [
+          { email: { endsWith: '@ggwp.bot' } },
+          { email: { endsWith: '@ggwp.app' } },
+        ],
+      },
       select: { id: true },
     });
     if (allBots.length === 0) return;

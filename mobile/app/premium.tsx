@@ -154,8 +154,9 @@ export default function PremiumScreen() {
   const getPlanPrice = (planId: string) => {
     const sku = PLAN_TO_SKU[planId];
     const sub = subscriptions?.find((s: { id: string }) => s.id === sku);
-    const displayPrice = (sub as { displayPrice?: string })?.displayPrice;
-    if (displayPrice) return displayPrice;
+    const displayPrice = (sub as { displayPrice?: string; currencyCode?: string })?.displayPrice;
+    const currencyCode = (sub as { currencyCode?: string })?.currencyCode;
+    if (displayPrice && currencyCode === 'TRY') return displayPrice;
     return PLANS.find(p => p.id === planId)?.price ?? '';
   };
 

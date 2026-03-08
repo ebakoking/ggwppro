@@ -19,7 +19,7 @@ export class SwipeService {
     if (fromId === toId)
       throw new BadRequestException('Cannot swipe yourself');
 
-    if (action !== SwipeAction.PENTAKILL) {
+    if (action === SwipeAction.LIKE) {
       const profile = await this.prisma.profile.findUnique({ where: { userId: fromId } });
       if (profile && !profile.isPremium) {
         const now = new Date();
@@ -51,11 +51,18 @@ export class SwipeService {
     let matched = false;
 
     if (action === SwipeAction.LIKE || action === SwipeAction.PENTAKILL) {
+      const genelGame = await this.prisma.gameCatalog.findFirst({
+        where: { slug: 'genel' },
+        select: { id: true },
+      });
+      const gameIds = [gameId];
+      if (genelGame && genelGame.id !== gameId) gameIds.push(genelGame.id);
+
       const reciprocal = await this.prisma.swipe.findFirst({
         where: {
           fromId: toId,
           toId: fromId,
-          gameId,
+          gameId: { in: gameIds },
           action: { in: [SwipeAction.LIKE, SwipeAction.PENTAKILL] },
         },
       });

@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsDateString,
   MaxLength,
+  Matches,
 } from 'class-validator';
 import { Gender, PlayStyle, GameLevel } from '@prisma/client';
 
@@ -13,6 +14,13 @@ export class UpdateProfileDto {
   @IsOptional()
   @MaxLength(50)
   displayName?: string;
+
+  @IsString()
+  @IsOptional()
+  @Matches(/^https:\/\/images\.unsplash\.com\//, {
+    message: 'Sadece önceden tanımlı avatarlar seçilebilir.',
+  })
+  avatarUrl?: string;
 
   @IsDateString()
   @IsOptional()

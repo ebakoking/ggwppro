@@ -71,6 +71,7 @@ export default function ProfileScreen() {
   const handleSelectAvatar = async (url: string) => {
     try {
       await updateProfile({ avatarUrl: url });
+      await fetchProfile();
       setShowAvatarModal(false);
     } catch {
       setShowAvatarModal(false);
@@ -92,8 +93,8 @@ export default function ProfileScreen() {
     if (result.canceled || !result.assets?.[0]?.uri) return;
     setUploadingAvatar(true);
     try {
-      const { avatarUrl: newUrl } = await profileApi.uploadAvatar(result.assets[0].uri);
-      await updateProfile({ avatarUrl: newUrl });
+      await profileApi.uploadAvatar(result.assets[0].uri);
+      await fetchProfile();
       setShowAvatarModal(false);
     } catch (e: any) {
       Alert.alert('Hata', e?.message || 'Yükleme başarısız.');
