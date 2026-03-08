@@ -83,9 +83,10 @@ export class DiscoverService {
       ? candidates.filter((c) => {
           if (myProfile.filterGender) {
             const wanted = this.genderMap[myProfile.filterGender] || myProfile.filterGender;
-            if (c.gender && c.gender !== wanted) return false;
+            if (!c.gender || c.gender !== wanted) return false;
           }
-          if (c.dateOfBirth && (myProfile.filterAgeMin != null || myProfile.filterAgeMax != null)) {
+          if (myProfile.filterAgeMin != null || myProfile.filterAgeMax != null) {
+            if (!c.dateOfBirth) return false;
             const age = this.getAge(c.dateOfBirth);
             if (myProfile.filterAgeMin != null && age < myProfile.filterAgeMin) return false;
             if (myProfile.filterAgeMax != null && myProfile.filterAgeMax < 50 && age > myProfile.filterAgeMax) return false;
@@ -93,7 +94,7 @@ export class DiscoverService {
           if (myProfile.filterMicOnly && !c.usesMic) return false;
           if (myProfile.filterPlayStyles && myProfile.filterPlayStyles.length > 0) {
             const mapped = myProfile.filterPlayStyles.map((s) => playStyleMap[s] || s);
-            if (c.playStyle && !mapped.includes(c.playStyle)) return false;
+            if (!c.playStyle || !mapped.includes(c.playStyle)) return false;
           }
           return true;
         })
