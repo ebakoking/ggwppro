@@ -8,6 +8,7 @@ import {
   Dimensions,
   Animated,
   Image,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -150,9 +151,9 @@ export default function WelcomeScreen() {
       <View style={styles.footer}>
         <Text style={styles.footerText}>
           Devam ederek{' '}
-          <Text style={styles.footerLink} onPress={() => router.push('/terms')}>Kullanım Şartları</Text>
+          <Text style={styles.footerLink} onPress={() => Linking.openURL('https://ebakoking.github.io/ggwppro/terms.html')}>Kullanım Şartları</Text>
           {' '}ve{' '}
-          <Text style={styles.footerLink} onPress={() => router.push('/privacy')}>Gizlilik Politikası</Text>
+          <Text style={styles.footerLink} onPress={() => Linking.openURL('https://ebakoking.github.io/ggwppro/privacy-policy.html')}>Gizlilik Politikası</Text>
           'nı kabul etmiş sayılırsın.
         </Text>
       </View>
