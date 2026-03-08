@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GGWP Admin Panel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a1628;--surface:#111d32;--border:#1e3a5f;--primary:#22d3ee;--danger:#ef4444;--text:#e2e8f0;--muted:#64748b;--success:#22c55e}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;max-width:400px;width:100%;text-align:center}
+.login-card h1{font-size:32px;letter-spacing:4px;margin-bottom:8px;color:var(--primary)}
+.login-card p{color:var(--muted);margin-bottom:24px;font-size:14px}
+.login-card input{width:100%;padding:14px 20px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:16px;margin-bottom:16px;outline:none}
+.login-card input:focus{border-color:var(--primary)}
+.login-card button{width:100%;padding:14px;border-radius:12px;border:none;background:var(--primary);color:var(--bg);font-size:16px;font-weight:700;cursor:pointer}
+.login-card button:hover{opacity:.9}
+#app{display:none}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;justify-content:space-between;align-items:center}
+.topbar h1{font-size:20px;letter-spacing:3px;color:var(--primary)}
+.topbar button{background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px}
+.topbar button:hover{border-color:var(--danger);color:var(--danger)}
+.tabs{display:flex;gap:4px;padding:16px 32px 0;border-bottom:1px solid var(--border);background:var(--surface)}
+.tab{padding:12px 24px;cursor:pointer;color:var(--muted);font-size:14px;font-weight:600;border-bottom:2px solid transparent;transition:.2s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.content{padding:24px 32px;max-width:1200px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+.stat-card .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.stat-card .value{font-size:28px;font-weight:700;color:var(--primary)}
+table{width:100%;border-collapse:collapse;margin-top:16px}
+th{text-align:left;padding:12px 16px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border)}
+td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
+tr:hover{background:rgba(34,211,238,.03)}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-pending{background:rgba(234,179,8,.15);color:#eab308}
+.badge-reviewed{background:rgba(34,197,94,.15);color:var(--success)}
+.badge-premium{background:rgba(168,85,247,.15);color:#a855f7}
+.btn{padding:6px 14px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:.2s}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--danger)}
+.btn-danger:hover{background:rgba(239,68,68,.3)}
+.btn-success{background:rgba(34,197,94,.15);color:var(--success)}
+.btn-success:hover{background:rgba(34,197,94,.3)}
+.btn-primary{background:rgba(34,211,238,.15);color:var(--primary)}
+.btn-primary:hover{background:rgba(34,211,238,.3)}
+.empty{text-align:center;padding:48px;color:var(--muted)}
+.pagination{display:flex;gap:8px;margin-top:16px;justify-content:center}
+.pagination button{padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer}
+.pagination button:disabled{opacity:.4;cursor:default}
+.pagination button.active{background:var(--primary);color:var(--bg);border-color:var(--primary)}
+.search-bar{margin-bottom:16px}
+.search-bar input{width:100%;max-width:400px;padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none}
+.search-bar input:focus{border-color:var(--primary)}
+@media(max-width:768px){.content{padding:16px}.stats-grid{grid-template-columns:1fr 1fr}.tabs{overflow-x:auto}.topbar{padding:12px 16px}}
+</style>
+</head>
+<body>
+
+<div id="login" class="login-wrap">
+  <div class="login-card">
+    <h1>GGWP</h1>
+    <p>Admin Panel</p>
+    <input id="secretInput" type="password" placeholder="Admin Secret" autofocus>
+    <button onclick="doLogin()">Giriş Yap</button>
+    <p id="loginError" style="color:var(--danger);margin-top:12px;display:none"></p>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <h1>GGWP ADMIN</h1>
+    <button onclick="doLogout()">Çıkış</button>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('dashboard',this)">Dashboard</div>
+    <div class="tab" onclick="switchTab('users',this)">Kullanıcılar</div>
+    <div class="tab" onclick="switchTab('reports',this)">Raporlar</div>
+    <div class="tab" onclick="switchTab('forum',this)">Forum</div>
+  </div>
+  <div class="content" id="content"></div>
+</div>
+
+<script>
+const API=window.location.origin+'/api/admin';
+let token='';
+let currentTab='dashboard';
+let usersPage=1;
+let forumPage=1;
+
+function headers(){return{Authorization:'Bearer '+token,'Content-Type':'application/json'}}
+
+async function doLogin(){
+  const s=document.getElementById('secretInput').value.trim();
+  if(!s)return;
+  token=s;
+  try{
+    const r=await fetch(API+'/stats',{headers:headers()});
+    if(!r.ok)throw new Error();
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').style.display='block';
+    loadDashboard();
+  }catch{
+    document.getElementById('loginError').textContent='Geçersiz admin secret';
+    document.getElementById('loginError').style.display='block';
+    token='';
+  }
+}
+document.getElementById('secretInput').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+
+function doLogout(){
+  token='';
+  document.getElementById('login').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('secretInput').value='';
+}
+
+function switchTab(tab,el){
+  currentTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(tab==='dashboard')loadDashboard();
+  else if(tab==='users'){usersPage=1;loadUsers();}
+  else if(tab==='reports')loadReports();
+  else if(tab==='forum'){forumPage=1;loadForum();}
+}
+
+async function loadDashboard(){
+  const r=await fetch(API+'/stats',{headers:headers()});
+  const d=await r.json();
+  document.getElementById('content').innerHTML=`
+    <div class="stats-grid">
+      <div class="stat-card"><div class="label">Toplam Kullanıcı</div><div class="value">${d.totalUsers}</div></div>
+      <div class="stat-card"><div class="label">Toplam Eşleşme</div><div class="value">${d.totalMatches}</div></div>
+      <div class="stat-card"><div class="label">Toplam Mesaj</div><div class="value">${d.totalMessages}</div></div>
+      <div class="stat-card"><div class="label">Forum Paylaşım</div><div class="value">${d.totalPosts}</div></div>
+      <div class="stat-card"><div class="label">Bekleyen Rapor</div><div class="value" style="color:${d.pendingReports>0?'var(--danger)':'var(--success)'}">${d.pendingReports}</div></div>
+    </div>`;
+}
+
+async function loadUsers(){
+  const r=await fetch(API+'/users?page='+usersPage+'&limit=30',{headers:headers()});
+  const d=await r.json();
+  const totalPages=Math.ceil(d.total/30);
+  let rows=d.users.map(u=>`<tr>
+    <td>${u.username}</td>
+    <td>${u.email}</td>
+    <td>${u.profile?.displayName||'-'}</td>
+    <td>${u.profile?.isPremium?'<span class="badge badge-premium">Premium</span>':'-'}</td>
+    <td>${new Date(u.createdAt).toLocaleDateString('tr')}</td>
+    <td>
+      <button class="btn btn-danger" onclick="banUser('${u.id}','${u.username}')">Ban</button>
+    </td>
+  </tr>`).join('');
+
+  let pagination='';
+  for(let i=1;i<=totalPages;i++){
+    pagination+=`<button class="${i===usersPage?'active':''}" onclick="usersPage=${i};loadUsers()">${i}</button>`;
+  }
+
+  document.getElementById('content').innerHTML=`
+    <h2 style="margin-bottom:16px">Kullanıcılar (${d.total})</h2>
+    <table><thead><tr><th>Kullanıcı Adı</th><th>E-posta</th><th>İsim</th><th>Premium</th><th>Kayıt</th><th>İşlem</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="6" class="empty">Kullanıcı yok</td></tr>'}</tbody></table>
+    <div class="pagination">${pagination}</div>`;
+}
+
+async function loadReports(){
+  const r=await fetch(API+'/reports',{headers:headers()});
+  const d=await r.json();
+  let rows=d.reports.map(rp=>`<tr>
+    <td>${rp.reporter?.username||'-'}</td>
+    <td>${rp.reported?.username||'-'}</td>
+    <td>${rp.reason}</td>
+    <td>${rp.details||'-'}</td>
+    <td><span class="badge badge-${rp.status==='PENDING'?'pending':'reviewed'}">${rp.status}</span></td>
+    <td>${new Date(rp.createdAt).toLocaleDateString('tr')}</td>
+    <td>
+      ${rp.status==='PENDING'?`<button class="btn btn-success" onclick="resolveReport('${rp.id}')">Çözüldü</button>
+      <button class="btn btn-danger" onclick="banUser('${rp.reported?.id}','${rp.reported?.username}')">Ban</button>`:''}
+    </td>
+  </tr>`).join('');
+
+  document.getElementById('content').innerHTML=`
+    <h2 style="margin-bottom:16px">Raporlar (${d.reports.length})</h2>
+    <table><thead><tr><th>Raporlayan</th><th>Raporlanan</th><th>Sebep</th><th>Detay</th><th>Durum</th><th>Tarih</th><th>İşlem</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="7" class="empty">Rapor yok</td></tr>'}</tbody></table>`;
+}
+
+async function loadForum(){
+  const r=await fetch(API+'/forum-posts?page='+forumPage+'&limit=30',{headers:headers()});
+  const d=await r.json();
+  const totalPages=Math.ceil(d.total/30);
+  let rows=d.posts.map(p=>`<tr>
+    <td>${p.author?.username||'-'}</td>
+    <td>${p.game?.name||'-'}</td>
+    <td><strong>${esc(p.title)}</strong><br><small style="color:var(--muted)">${esc(p.content.slice(0,80))}${p.content.length>80?'...':''}</small></td>
+    <td>${p.likeCount}</td>
+    <td>${p.commentCount}</td>
+    <td>${new Date(p.createdAt).toLocaleDateString('tr')}</td>
+    <td><button class="btn btn-danger" onclick="deleteForumPost('${p.id}')">Sil</button></td>
+  </tr>`).join('');
+
+  let pagination='';
+  for(let i=1;i<=totalPages;i++){
+    pagination+=`<button class="${i===forumPage?'active':''}" onclick="forumPage=${i};loadForum()">${i}</button>`;
+  }
+
+  document.getElementById('content').innerHTML=`
+    <h2 style="margin-bottom:16px">Forum Paylaşımları (${d.total})</h2>
+    <table><thead><tr><th>Yazar</th><th>Oyun</th><th>İçerik</th><th>Beğeni</th><th>Yorum</th><th>Tarih</th><th>İşlem</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="7" class="empty">Paylaşım yok</td></tr>'}</tbody></table>
+    <div class="pagination">${pagination}</div>`;
+}
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+async function banUser(id,name){
+  if(!confirm(name+' kullanıcısını banlamak istediğinize emin misiniz? Tüm verileri silinecek!'))return;
+  await fetch(API+'/users/'+id+'/ban',{method:'POST',headers:headers(),body:JSON.stringify({reason:'Admin tarafından yasaklandı'})});
+  alert(name+' yasaklandı.');
+  if(currentTab==='users')loadUsers();
+  else if(currentTab==='reports')loadReports();
+}
+
+async function resolveReport(id){
+  await fetch(API+'/reports/'+id+'/status',{method:'POST',headers:headers(),body:JSON.stringify({status:'REVIEWED'})});
+  loadReports();
+}
+
+async function deleteForumPost(id){
+  if(!confirm('Bu paylaşımı silmek istediğinize emin misiniz?'))return;
+  await fetch(API+'/forum-posts/'+id,{method:'DELETE',headers:headers()});
+  loadForum();
+}
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { containsProfanity } from '../common/profanity-filter';
 
 @Injectable()
 export class ForumService {
@@ -45,6 +46,9 @@ export class ForumService {
     authorId: string,
     data: { gameId: string; title: string; content: string; linkUrl?: string },
   ) {
+    if (containsProfanity(data.title) || containsProfanity(data.content)) {
+      throw new BadRequestException('İçeriğiniz uygunsuz ifadeler barındırıyor. Lütfen düzenleyin.');
+    }
     return this.prisma.forumPost.create({
       data: {
         authorId,
@@ -61,6 +65,9 @@ export class ForumService {
   }
 
   async addComment(postId: string, authorId: string, content: string) {
+    if (containsProfanity(content)) {
+      throw new BadRequestException('Yorumunuz uygunsuz ifadeler barındırıyor. Lütfen düzenleyin.');
+    }
     const [comment] = await this.prisma.$transaction([
       this.prisma.forumComment.create({
         data: { postId, authorId, content },
@@ -104,5 +111,36 @@ export class ForumService {
       ]);
       return { liked: true };
     }
+  }
+
+  async reportPost(postId: string, reporterId: string, reason: string) {
+    const post = await this.prisma.forumPost.findUnique({
+      where: { id: postId },
+      select: { authorId: true },
+    });
+    if (!post) throw new NotFoundException('Post bulunamadı');
+
+    await this.prisma.report.create({
+      data: {
+        reporterId,
+        reportedId: post.authorId,
+        reason,
+        details: `Forum post: ${postId}`,
+      },
+    });
+    return { ok: true, message: 'Şikayetiniz alındı.' };
+  }
+
+  async deletePost(postId: string, userId: string) {
+    const post = await this.prisma.forumPost.findUnique({
+      where: { id: postId },
+      select: { authorId: true },
+    });
+    if (!post) throw new NotFoundException('Post bulunamadı');
+    if (post.authorId !== userId) {
+      throw new BadRequestException('Sadece kendi paylaşımlarınızı silebilirsiniz.');
+    }
+    await this.prisma.forumPost.delete({ where: { id: postId } });
+    return { ok: true };
   }
 }

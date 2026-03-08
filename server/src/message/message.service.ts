@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
+import { containsProfanity } from '../common/profanity-filter';
 
 const VOICE_DIR = path.join(process.cwd(), 'uploads', 'voice');
 
@@ -47,6 +48,10 @@ export class MessageService {
     if (!match) throw new NotFoundException('Match not found');
     if (match.userAId !== senderId && match.userBId !== senderId)
       throw new ForbiddenException('Not your match');
+
+    if (content && opts?.messageType !== 'VOICE' && containsProfanity(content)) {
+      throw new BadRequestException('Mesajınız uygunsuz ifadeler barındırıyor.');
+    }
 
     const message = await this.prisma.message.create({
       data: {

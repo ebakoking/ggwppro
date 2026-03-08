@@ -12,6 +12,8 @@ interface ForumState {
   createPost: (data: { gameId: string; title: string; content: string; linkUrl?: string }) => Promise<boolean>;
   addComment: (postId: string, content: string) => Promise<boolean>;
   toggleLike: (postId: string) => Promise<void>;
+  reportPost: (postId: string, reason: string) => Promise<boolean>;
+  deletePost: (postId: string) => Promise<boolean>;
 }
 
 export const useForumStore = create<ForumState>((set, get) => ({
@@ -86,5 +88,26 @@ export const useForumStore = create<ForumState>((set, get) => ({
             : s.currentPost,
       }));
     } catch {}
+  },
+
+  reportPost: async (postId, reason) => {
+    try {
+      await forumApi.reportPost(postId, reason);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  deletePost: async (postId) => {
+    try {
+      await forumApi.deletePost(postId);
+      set((s) => ({
+        posts: s.posts.filter((p) => p.id !== postId),
+      }));
+      return true;
+    } catch {
+      return false;
+    }
   },
 }));

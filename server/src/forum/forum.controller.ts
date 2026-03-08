@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -51,5 +52,19 @@ export class ForumController {
   @Post(':id/like')
   toggleLike(@Req() req: any, @Param('id') postId: string) {
     return this.forumService.toggleLike(postId, req.user.id);
+  }
+
+  @Post(':id/report')
+  reportPost(
+    @Req() req: any,
+    @Param('id') postId: string,
+    @Body() body: { reason: string },
+  ) {
+    return this.forumService.reportPost(postId, req.user.id, body.reason);
+  }
+
+  @Delete(':id')
+  deletePost(@Req() req: any, @Param('id') postId: string) {
+    return this.forumService.deletePost(postId, req.user.id);
   }
 }

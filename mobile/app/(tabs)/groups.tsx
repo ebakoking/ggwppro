@@ -11,6 +11,7 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  ActionSheetIOS,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,7 +30,7 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function ForumScreen() {
-  const { posts, isLoading, loadPosts, loadPost, createPost, addComment, toggleLike, currentPost } = useForumStore();
+  const { posts, isLoading, loadPosts, loadPost, createPost, addComment, toggleLike, currentPost, reportPost, deletePost } = useForumStore();
   const { myGames, loadMyGames, catalog, loadCatalog } = useGameStore();
   const [filterGameId, setFilterGameId] = useState<string | undefined>();
   const [showCreate, setShowCreate] = useState(false);
@@ -94,7 +95,43 @@ export default function ForumScreen() {
             <View key={post.id} style={styles.postCard}>
               <View style={styles.postHeader}>
                 <Text style={styles.postAuthor}>{post.author?.username || 'Anonim'}</Text>
-                <Text style={styles.postTime}>{timeAgo(post.createdAt)}</Text>
+                <View style={styles.postHeaderRight}>
+                  <Text style={styles.postTime}>{timeAgo(post.createdAt)}</Text>
+                  <TouchableOpacity
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                    onPress={() => {
+                      const options = ['Şikayet Et', 'Sil', 'İptal'];
+                      if (Platform.OS === 'ios') {
+                        ActionSheetIOS.showActionSheetWithOptions(
+                          { options, destructiveButtonIndex: 1, cancelButtonIndex: 2 },
+                          (idx) => {
+                            if (idx === 0) {
+                              Alert.alert('Şikayet', 'Sebep seçin:', [
+                                { text: 'İptal', style: 'cancel' },
+                                { text: 'Spam / Reklam', onPress: () => reportPost(post.id, 'Spam / Reklam').then((ok) => ok && Alert.alert('Teşekkürler', 'Şikayetiniz alındı.')) },
+                                { text: 'Hakaret / Taciz', onPress: () => reportPost(post.id, 'Hakaret / Taciz').then((ok) => ok && Alert.alert('Teşekkürler', 'Şikayetiniz alındı.')) },
+                                { text: 'Uygunsuz İçerik', onPress: () => reportPost(post.id, 'Uygunsuz İçerik').then((ok) => ok && Alert.alert('Teşekkürler', 'Şikayetiniz alındı.')) },
+                              ]);
+                            } else if (idx === 1) {
+                              Alert.alert('Sil', 'Bu paylaşımı silmek istediğinize emin misiniz?', [
+                                { text: 'İptal', style: 'cancel' },
+                                { text: 'Sil', style: 'destructive', onPress: () => deletePost(post.id) },
+                              ]);
+                            }
+                          },
+                        );
+                      } else {
+                        Alert.alert('Seçenekler', undefined, [
+                          { text: 'Şikayet Et', onPress: () => reportPost(post.id, 'Uygunsuz İçerik').then((ok) => ok && Alert.alert('Teşekkürler', 'Şikayetiniz alındı.')) },
+                          { text: 'Sil', style: 'destructive', onPress: () => deletePost(post.id) },
+                          { text: 'İptal', style: 'cancel' },
+                        ]);
+                      }
+                    }}
+                  >
+                    <Ionicons name="ellipsis-horizontal" size={18} color={Colors.textMuted} />
+                  </TouchableOpacity>
+                </View>
               </View>
               <View style={styles.postGameBadge}>
                 <Text style={styles.postGameText}>{post.game?.name}</Text>
@@ -243,6 +280,7 @@ const styles = StyleSheet.create({
   emptySubtext: { fontFamily: Fonts.body, fontSize: FontSize.sm, color: Colors.textMuted },
   postCard: { backgroundColor: Colors.surface, borderRadius: BorderRadius.lg, padding: Spacing.xl, marginBottom: Spacing.md, borderWidth: 1, borderColor: Colors.border },
   postHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
+  postHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   postAuthor: { fontFamily: Fonts.bodySemiBold, fontSize: FontSize.sm, color: Colors.text },
   postTime: { fontFamily: Fonts.body, fontSize: FontSize.xs, color: Colors.textMuted },
   postGameBadge: { backgroundColor: 'rgba(0,229,255,0.1)', borderRadius: BorderRadius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 2, alignSelf: 'flex-start', marginBottom: Spacing.sm },

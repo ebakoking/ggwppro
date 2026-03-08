@@ -409,4 +409,17 @@ export const forumApi = {
       method: 'POST',
     });
   },
+
+  reportPost(postId: string, reason: string) {
+    return request<{ ok: boolean }>(`/forum/${postId}/report`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  deletePost(postId: string) {
+    return request<{ ok: boolean }>(`/forum/${postId}`, {
+      method: 'DELETE',
+    });
+  },
 };

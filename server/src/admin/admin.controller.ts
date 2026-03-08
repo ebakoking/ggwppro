@@ -144,4 +144,53 @@ export class AdminController {
     await this.prisma.user.delete({ where: { id: userId } });
     return { ok: true, deleted: user.username };
   }
+
+  @Get('forum-posts')
+  async listForumPosts(
+    @Headers('authorization') auth: string,
+    @Query('page') page = '1',
+    @Query('limit') limit = '50',
+  ) {
+    this.checkAuth(auth);
+    const take = Math.min(Number(limit) || 50, 100);
+    const skip = (Math.max(Number(page) || 1, 1) - 1) * take;
+    const [posts, total] = await Promise.all([
+      this.prisma.forumPost.findMany({
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          author: { select: { id: true, username: true } },
+          game: { select: { name: true } },
+        },
+      }),
+      this.prisma.forumPost.count(),
+    ]);
+    return { posts, total, page: Number(page), limit: take };
+  }
+
+  @Delete('forum-posts/:postId')
+  async deleteForumPost(
+    @Headers('authorization') auth: string,
+    @Param('postId') postId: string,
+  ) {
+    this.checkAuth(auth);
+    const post = await this.prisma.forumPost.findUnique({ where: { id: postId } });
+    if (!post) throw new NotFoundException('Post bulunamadı');
+    await this.prisma.forumPost.delete({ where: { id: postId } });
+    return { ok: true };
+  }
+
+  @Post('users/:userId/ban')
+  async banUser(
+    @Headers('authorization') auth: string,
+    @Param('userId') userId: string,
+    @Body() body: { reason?: string },
+  ) {
+    this.checkAuth(auth);
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+    await this.prisma.user.delete({ where: { id: userId } });
+    return { ok: true, banned: user.username, reason: body.reason || 'Admin tarafından yasaklandı' };
+  }
 }

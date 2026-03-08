@@ -392,7 +392,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   footerLink: {
-    color: '#9ca3af',
+    color: '#22d3ee',
     textDecorationLine: 'underline',
+    fontFamily: Fonts.bodySemiBold,
   },
 });

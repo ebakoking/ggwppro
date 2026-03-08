@@ -14,6 +14,7 @@ async function bootstrap() {
     }),
   );
   app.use('/uploads', require('express').static(path.join(process.cwd(), 'uploads')));
+  app.use('/admin', require('express').static(path.join(__dirname, '..', '..', 'public')));
   app.enableCors({ origin: '*' });
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
