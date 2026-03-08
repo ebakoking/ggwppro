@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.ggwp.app",
-      "buildNumber": "8",
+      "buildNumber": "11",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Ses mesajı kaydetmek için mikrofon erişimi gereklidir.",
         "NSCameraUsageDescription": "Profil fotoğrafı çekmek için kamera erişimi gereklidir.",
