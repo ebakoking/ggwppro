@@ -310,6 +310,35 @@ export default function PremiumScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
+          {/* Restore */}
+          <TouchableOpacity
+            style={s.restoreBtn}
+            onPress={async () => {
+              if (Platform.OS !== 'ios') return;
+              setLoading(true);
+              try {
+                const receipt = await getReceiptIOS();
+                if (!receipt) {
+                  Alert.alert('Bilgi', 'Geri yüklenecek satın alım bulunamadı.');
+                  setLoading(false);
+                  return;
+                }
+                await profileApi.iapComplete('ios', 'restore', receipt);
+                await fetchProfile();
+                setLoading(false);
+                Alert.alert('Başarılı', 'Aboneliğiniz geri yüklendi.', [
+                  { text: 'Tamam', onPress: () => router.back() },
+                ]);
+              } catch (e: any) {
+                setLoading(false);
+                Alert.alert('Bilgi', 'Geri yüklenecek aktif abonelik bulunamadı.');
+              }
+            }}
+            disabled={loading}
+          >
+            <Text style={s.restoreTxt}>Satın Alımları Geri Yükle</Text>
+          </TouchableOpacity>
+
           {/* Footer */}
           <Text style={s.footer}>
             Ödeme App Store veya Google Play üzerinden güvenli şekilde yapılır. Abonelik otomatik yenilenir ve istediğin zaman iptal edebilirsin.
@@ -438,6 +467,8 @@ const s = StyleSheet.create({
   },
   ctaBtnTxt: { fontSize: 16, fontWeight: '800', color: '#000', letterSpacing: 1 },
 
+  restoreBtn: { alignItems: 'center', marginBottom: 16 },
+  restoreTxt: { fontSize: 13, color: '#22d3ee', textDecorationLine: 'underline' },
   footer: {
     textAlign: 'center', fontSize: 12, color: '#6b7280',
     lineHeight: 18, paddingHorizontal: 8,

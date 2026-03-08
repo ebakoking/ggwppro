@@ -37,13 +37,6 @@ export class IapService {
       throw new BadRequestException('Sadece iOS destekleniyor.');
     }
 
-    const planId = PREMIUM_PRODUCT_IDS[productId];
-    const packageId = PENTAKILL_PRODUCT_IDS[productId];
-
-    if (!planId && !packageId) {
-      throw new BadRequestException('Geçersiz ürün.');
-    }
-
     const sharedSecret = this.config.get('APPLE_IAP_SHARED_SECRET');
     if (!sharedSecret) {
       throw new BadRequestException('Sunucu IAP yapılandırması eksik.');
@@ -58,6 +51,28 @@ export class IapService {
     }
 
     const latestReceiptInfo = result.latest_receipt_info ?? result.receipt?.in_app ?? [];
+
+    if (productId === 'restore') {
+      const activeSub = latestReceiptInfo.find((t: any) => {
+        const pid = t.product_id;
+        if (!PREMIUM_PRODUCT_IDS[pid]) return false;
+        const expiresMs = Number(t.expires_date_ms);
+        return expiresMs > Date.now();
+      });
+      if (!activeSub) {
+        throw new BadRequestException('Aktif abonelik bulunamadı.');
+      }
+      const plan = PREMIUM_PRODUCT_IDS[activeSub.product_id];
+      return this.profileService.activatePremium(userId, plan);
+    }
+
+    const planId = PREMIUM_PRODUCT_IDS[productId];
+    const packageId = PENTAKILL_PRODUCT_IDS[productId];
+
+    if (!planId && !packageId) {
+      throw new BadRequestException('Geçersiz ürün.');
+    }
+
     const hasThisProduct = latestReceiptInfo.some(
       (t: any) => t.product_id === productId,
     );

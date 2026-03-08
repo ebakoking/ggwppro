@@ -249,8 +249,21 @@ export default function ChatScreen() {
         },
         (idx) => {
           if (idx === 0) doReport();
-          else if (idx === 1) Alert.alert('Engellendi', 'Kullanıcı engellendi.');
-          else if (idx === 2) {
+          else if (idx === 1) {
+            if (!otherUserId || isLocalChat) {
+              Alert.alert('Bilgi', 'Sadece eşleştiğiniz kullanıcıları engelleyebilirsiniz.');
+              return;
+            }
+            Alert.alert('Engelle', 'Bu kullanıcıyı engellemek istediğinize emin misiniz?', [
+              { text: 'İptal', style: 'cancel' },
+              { text: 'Engelle', style: 'destructive', onPress: async () => {
+                try {
+                  await reportApi.report({ reportedId: otherUserId, reason: 'Engelleme İsteği', matchId: matchId || undefined });
+                  Alert.alert('Engellendi', 'Kullanıcı engellendi ve raporlandı.');
+                } catch { Alert.alert('Hata', 'İşlem başarısız.'); }
+              }},
+            ]);
+          } else if (idx === 2) {
             Alert.alert('Sohbeti Bitir', 'Sohbet sonlandırılsın mı?', [
               { text: 'İptal' },
               { text: 'Bitir', style: 'destructive', onPress: endChat },
@@ -261,7 +274,21 @@ export default function ChatScreen() {
     } else {
       Alert.alert('Seçenekler', undefined, [
         { text: 'Şikayet Et', onPress: doReport },
-        { text: 'Engelle', onPress: () => Alert.alert('Engellendi', 'Kullanıcı engellendi.') },
+        { text: 'Engelle', onPress: () => {
+          if (!otherUserId || isLocalChat) {
+            Alert.alert('Bilgi', 'Sadece eşleştiğiniz kullanıcıları engelleyebilirsiniz.');
+            return;
+          }
+          Alert.alert('Engelle', 'Bu kullanıcıyı engellemek istediğinize emin misiniz?', [
+            { text: 'İptal', style: 'cancel' },
+            { text: 'Engelle', style: 'destructive', onPress: async () => {
+              try {
+                await reportApi.report({ reportedId: otherUserId, reason: 'Engelleme İsteği', matchId: matchId || undefined });
+                Alert.alert('Engellendi', 'Kullanıcı engellendi ve raporlandı.');
+              } catch { Alert.alert('Hata', 'İşlem başarısız.'); }
+            }},
+          ]);
+        }},
         {
           text: 'Sohbeti Bitir',
           style: 'destructive',
