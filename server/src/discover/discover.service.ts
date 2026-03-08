@@ -36,9 +36,22 @@ export class DiscoverService {
     });
     const swipedIds = alreadySwiped.map((s) => s.toId);
 
+    const blockedByMe = await this.prisma.block.findMany({
+      where: { blockerId: userId },
+      select: { blockedId: true },
+    });
+    const blockedMe = await this.prisma.block.findMany({
+      where: { blockedId: userId },
+      select: { blockerId: true },
+    });
+    const blockedIds = [
+      ...blockedByMe.map((b) => b.blockedId),
+      ...blockedMe.map((b) => b.blockerId),
+    ];
+
     const candidates = await this.prisma.profile.findMany({
       where: {
-        userId: { notIn: [...swipedIds, userId] },
+        userId: { notIn: [...swipedIds, ...blockedIds, userId] },
       },
       take: limit * 5,
       include: {

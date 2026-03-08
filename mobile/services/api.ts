@@ -312,6 +312,15 @@ export const matchApi = {
     const q = gameId ? `?gameId=${gameId}` : '';
     return request<MatchData[]>(`/matches${q}`);
   },
+  deleteMatch(matchId: string) {
+    return request<{ ok: boolean }>(`/matches/${matchId}`, { method: 'DELETE' });
+  },
+  blockUser(blockedId: string) {
+    return request<{ ok: boolean }>('/matches/block', {
+      method: 'POST',
+      body: JSON.stringify({ blockedId }),
+    });
+  },
 };
 
 // ─── Messages ────────────────────────────────────────

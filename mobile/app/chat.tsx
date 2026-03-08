@@ -22,7 +22,7 @@ import { useMessageStore } from '@/stores/messageStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
 import { getDefaultAvatarUrl } from '@/components/AvatarSelectModal';
-import { messageApi, reportApi, UPLOADS_BASE } from '@/services/api';
+import { messageApi, matchApi, reportApi, UPLOADS_BASE } from '@/services/api';
 
 const QUICK_REPLIES = ['Rank nedir?', 'Hangi oyun?', 'Hadi girelim! 🎮'];
 const REACTIONS = ['🔥', '👍', 'GG'];
@@ -193,7 +193,13 @@ export default function ChatScreen() {
   };
 
   const endChat = async () => {
-    if (isLocalChat) await deleteLocalChat(localChatId, userId);
+    try {
+      if (isLocalChat) {
+        await deleteLocalChat(localChatId, userId);
+      } else if (matchId) {
+        await matchApi.deleteMatch(matchId);
+      }
+    } catch {}
     router.back();
   };
 
@@ -254,12 +260,13 @@ export default function ChatScreen() {
               Alert.alert('Bilgi', 'Sadece eşleştiğiniz kullanıcıları engelleyebilirsiniz.');
               return;
             }
-            Alert.alert('Engelle', 'Bu kullanıcıyı engellemek istediğinize emin misiniz?', [
+            Alert.alert('Engelle', 'Bu kullanıcıyı engellemek istediğinize emin misiniz? Eşleşme ve sohbet silinecektir.', [
               { text: 'İptal', style: 'cancel' },
               { text: 'Engelle', style: 'destructive', onPress: async () => {
                 try {
-                  await reportApi.report({ reportedId: otherUserId, reason: 'Engelleme İsteği', matchId: matchId || undefined });
-                  Alert.alert('Engellendi', 'Kullanıcı engellendi ve raporlandı.');
+                  await matchApi.blockUser(otherUserId);
+                  Alert.alert('Engellendi', 'Kullanıcı engellendi. Artık birbirinizi göremezsiniz.');
+                  router.back();
                 } catch { Alert.alert('Hata', 'İşlem başarısız.'); }
               }},
             ]);
@@ -279,12 +286,13 @@ export default function ChatScreen() {
             Alert.alert('Bilgi', 'Sadece eşleştiğiniz kullanıcıları engelleyebilirsiniz.');
             return;
           }
-          Alert.alert('Engelle', 'Bu kullanıcıyı engellemek istediğinize emin misiniz?', [
+          Alert.alert('Engelle', 'Bu kullanıcıyı engellemek istediğinize emin misiniz? Eşleşme ve sohbet silinecektir.', [
             { text: 'İptal', style: 'cancel' },
             { text: 'Engelle', style: 'destructive', onPress: async () => {
               try {
-                await reportApi.report({ reportedId: otherUserId, reason: 'Engelleme İsteği', matchId: matchId || undefined });
-                Alert.alert('Engellendi', 'Kullanıcı engellendi ve raporlandı.');
+                await matchApi.blockUser(otherUserId);
+                Alert.alert('Engellendi', 'Kullanıcı engellendi. Artık birbirinizi göremezsiniz.');
+                router.back();
               } catch { Alert.alert('Hata', 'İşlem başarısız.'); }
             }},
           ]);

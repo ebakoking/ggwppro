@@ -72,6 +72,8 @@ model User {
   forumLikes     ForumLike[]
   reportsSent    Report[]      @relation("ReportReporter")
   reportsReceived Report[]     @relation("ReportReported")
+  blocksSent     Block[]       @relation("BlockBlocker")
+  blocksReceived Block[]       @relation("BlockBlocked")
 
   @@map("users")
 }
@@ -204,6 +206,18 @@ model Report {
 
   @@index([reportedId, status])
   @@map("reports")
+}
+
+model Block {
+  id         String   @id @default(uuid())
+  blockerId  String
+  blocker    User     @relation("BlockBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId  String
+  blocked    User     @relation("BlockBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@map("blocks")
 }
 
 model ForumPost {
