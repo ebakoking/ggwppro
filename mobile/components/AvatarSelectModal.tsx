@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, FontSize, Spacing, BorderRadius } from '@/constants/theme';
+import { UPLOADS_BASE } from '@/services/api';
 
 export const AVATAR_OPTIONS = [
   'https://images.unsplash.com/photo-1618517048485-f125b94309a8?w=400',
@@ -30,7 +31,10 @@ export const AVATAR_OPTIONS = [
 ];
 
 export function getDefaultAvatarUrl(profile: { avatarUrl?: string | null; gender?: string | null } | null): string {
-  if (profile?.avatarUrl) return profile.avatarUrl;
+  if (profile?.avatarUrl) {
+    if (profile.avatarUrl.startsWith('http')) return profile.avatarUrl;
+    return UPLOADS_BASE + profile.avatarUrl;
+  }
   if (!profile?.gender) return AVATAR_OPTIONS[0];
   if (profile.gender === 'FEMALE') return AVATAR_OPTIONS[1];
   if (profile.gender === 'OTHER') return AVATAR_OPTIONS[2];

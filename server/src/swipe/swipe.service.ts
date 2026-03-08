@@ -49,6 +49,7 @@ export class SwipeService {
     });
 
     let matched = false;
+    let matchId: string | null = null;
 
     if (action === SwipeAction.LIKE || action === SwipeAction.PENTAKILL) {
       const genelGame = await this.prisma.gameCatalog.findFirst({
@@ -69,7 +70,7 @@ export class SwipeService {
 
       if (reciprocal) {
         const [a, b] = [fromId, toId].sort();
-        await this.prisma.match.upsert({
+        const match = await this.prisma.match.upsert({
           where: {
             userAId_userBId_gameId: { userAId: a, userBId: b, gameId },
           },
@@ -77,6 +78,7 @@ export class SwipeService {
           create: { userAId: a, userBId: b, gameId },
         });
         matched = true;
+        matchId = match.id;
 
         this.notifications
           .sendPushToMany(
@@ -89,7 +91,7 @@ export class SwipeService {
       }
     }
 
-    return { swipe, matched };
+    return { swipe, matched, matchId };
   }
 
   async getWhoLikedMe(userId: string, gameId: string) {

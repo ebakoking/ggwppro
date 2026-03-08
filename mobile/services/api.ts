@@ -155,6 +155,20 @@ export const authApi = {
     });
   },
 
+  forgotPassword(email: string) {
+    return request<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  resetPassword(email: string, code: string, newPassword: string) {
+    return request<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, code, newPassword }),
+    });
+  },
+
   logout() {
     return request<void>('/auth/logout', { method: 'POST' });
   },
@@ -240,7 +254,7 @@ export const profileApi = {
       throw new ApiError(res.status, text || 'Yükleme başarısız');
     }
     const data = await res.json();
-    return { avatarUrl: base + data.avatarUrl };
+    return { avatarUrl: data.avatarUrl };
   },
 };
 
@@ -285,7 +299,7 @@ export const discoverApi = {
 // ─── Swipe ───────────────────────────────────────────
 export const swipeApi = {
   swipe(toId: string, action: SwipeAction, gameId: string) {
-    return request<{ swipe: any; matched: boolean }>('/swipe', {
+    return request<{ swipe: any; matched: boolean; matchId: string | null }>('/swipe', {
       method: 'POST',
       body: JSON.stringify({ toId, action, gameId }),
     });
@@ -333,7 +347,7 @@ export const messageApi = {
       throw new ApiError(res.status, text || 'Ses yüklemesi başarısız');
     }
     const data = await res.json();
-    return { audioUrl: UPLOADS_BASE + data.audioUrl };
+    return { audioUrl: data.audioUrl };
   },
 
   markAsRead(matchId: string) {

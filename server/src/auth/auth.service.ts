@@ -180,6 +180,55 @@ export class AuthService {
     return { message: 'Doğrulama e-postası tekrar gönderildi.' };
   }
 
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+    if (!user) {
+      return { message: 'Eğer bu adres kayıtlıysa şifre sıfırlama kodu gönderildi.' };
+    }
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+    const hashedCode = await bcrypt.hash(code, 10);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: hashedCode,
+        passwordResetExpiresAt: expiresAt,
+      },
+    });
+    await this.mail.sendPasswordResetEmail(user.email, user.username, code);
+    return { message: 'Eğer bu adres kayıtlıysa şifre sıfırlama kodu gönderildi.' };
+  }
+
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+    if (
+      !user ||
+      !user.passwordResetToken ||
+      !user.passwordResetExpiresAt ||
+      user.passwordResetExpiresAt < new Date()
+    ) {
+      throw new BadRequestException('Kod geçersiz veya süresi dolmuş.');
+    }
+    const valid = await bcrypt.compare(code, user.passwordResetToken);
+    if (!valid) {
+      throw new BadRequestException('Kod geçersiz veya süresi dolmuş.');
+    }
+    const hash = await bcrypt.hash(newPassword, 12);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: hash,
+        passwordResetToken: null,
+        passwordResetExpiresAt: null,
+      },
+    });
+    return { message: 'Şifreniz başarıyla değiştirildi. Giriş yapabilirsiniz.' };
+  }
+
   async refreshTokens(userId: string, rt: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

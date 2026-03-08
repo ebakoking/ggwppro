@@ -8,6 +8,7 @@ interface DiscoverState {
   isLoading: boolean;
   lastMatch: boolean;
   matchedProfile: Profile | null;
+  lastMatchId: string | null;
 
   loadFeed: (gameId: string | null) => Promise<void>;
   swipe: (action: SwipeAction, gameId: string | null) => Promise<void>;
@@ -21,6 +22,7 @@ export const useDiscoverStore = create<DiscoverState>((set, get) => ({
   isLoading: false,
   lastMatch: false,
   matchedProfile: null,
+  lastMatchId: null,
 
   loadFeed: async (gameId) => {
     set({ isLoading: true });
@@ -42,7 +44,7 @@ export const useDiscoverStore = create<DiscoverState>((set, get) => ({
 
     try {
       const result = await swipeApi.swipe(current.userId, action, gameId);
-      if (result.matched) set({ lastMatch: true, matchedProfile: current });
+      if (result.matched) set({ lastMatch: true, matchedProfile: current, lastMatchId: result.matchId ?? null });
     } catch (err: any) {
       set({ currentIndex: currentIndex });
       throw err;
@@ -64,5 +66,5 @@ export const useDiscoverStore = create<DiscoverState>((set, get) => ({
     set({ currentIndex: next });
   },
 
-  clearMatchFlag: () => set({ lastMatch: false, matchedProfile: null }),
+  clearMatchFlag: () => set({ lastMatch: false, matchedProfile: null, lastMatchId: null }),
 }));

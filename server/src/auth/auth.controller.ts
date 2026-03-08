@@ -34,6 +34,18 @@ export class AuthController {
     return this.authService.resendVerificationEmail(body.email || '');
   }
 
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  forgotPassword(@Body() body: { email: string }) {
+    return this.authService.forgotPassword(body.email || '');
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  resetPassword(@Body() body: { email: string; code: string; newPassword: string }) {
+    return this.authService.resetPassword(body.email, body.code, body.newPassword);
+  }
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: LoginDto) {

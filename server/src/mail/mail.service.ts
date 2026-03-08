@@ -69,4 +69,47 @@ export class MailService {
       return false;
     }
   }
+
+  async sendPasswordResetEmail(
+    to: string,
+    username: string,
+    code: string,
+  ): Promise<boolean> {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: sans-serif; background: #0a0e1a; color: #e2e8f0; padding: 24px;">
+          <div style="max-width: 480px; margin: 0 auto;">
+            <h2 style="color: #00E5FF;">GGWP – Şifre Sıfırlama</h2>
+            <p>Merhaba <strong>${username}</strong>,</p>
+            <p>Şifrenizi sıfırlamak için aşağıdaki kodu uygulamada girin:</p>
+            <div style="background: #1e293b; padding: 16px; border-radius: 8px; text-align: center; margin: 16px 0;">
+              <span style="font-size: 32px; font-weight: bold; color: #00E5FF; letter-spacing: 8px;">${code}</span>
+            </div>
+            <p>Bu kod 1 saat geçerlidir. Eğer bu isteği siz yapmadıysanız bu e-postayı yok sayabilirsiniz.</p>
+            <p style="color: #64748b; font-size: 12px;">— GGWP Ekibi</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    if (!this.isConfigured()) {
+      console.log('[Mail] SMTP yapılandırılmadı – şifre sıfırlama e-postası atlanıyor:', to, 'Kod:', code);
+      return true;
+    }
+
+    try {
+      await this.transporter!.sendMail({
+        from: this.config.get('MAIL_FROM') || `"GGWP" <${this.config.get('MAIL_USER')}>`,
+        to,
+        subject: 'GGWP – Şifre Sıfırlama Kodu',
+        html,
+      });
+      return true;
+    } catch (err) {
+      console.error('[Mail] Şifre sıfırlama e-postası gönderilemedi:', err);
+      return false;
+    }
+  }
 }

@@ -30,7 +30,7 @@ const PLAY_STYLE_LABELS: Record<string, string> = {
 
 export default function MatchScreen() {
   const router = useRouter();
-  const { matchedProfile, clearMatchFlag } = useDiscoverStore();
+  const { matchedProfile, lastMatchId, clearMatchFlag } = useDiscoverStore();
   const { profile: myProfile } = useProfileStore();
 
   const pulse = useRef(new Animated.Value(1)).current;
@@ -78,12 +78,13 @@ export default function MatchScreen() {
   const micOn = matchedProfile?.usesMic ?? false;
 
   const handleChat = () => {
+    const mId = lastMatchId ?? '';
     clearMatchFlag();
     const userGames = matchedProfile?.user?.userGames ?? [];
     router.replace({
       pathname: '/chat',
       params: {
-        matchId: '',
+        matchId: mId,
         name: otherName,
         avatarUrl: otherAvatar,
         userId: matchedProfile?.userId ?? '',

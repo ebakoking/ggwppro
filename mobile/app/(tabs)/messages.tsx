@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Fonts } from '@/constants/theme';
 import { useMessageStore } from '@/stores/messageStore';
@@ -58,10 +59,12 @@ export default function MessagesScreen() {
   const [tab, setTab] = useState<'msg' | 'req'>('msg');
   const isPremium = profile?.isPremium ?? false;
 
-  useEffect(() => {
-    loadMatches();
-    loadLocalChats(userId);
-  }, [userId]);
+  useFocusEffect(
+    useCallback(() => {
+      loadMatches();
+      loadLocalChats(userId);
+    }, [userId]),
+  );
 
   const newDuos: NewDuo[] = [
     ...localChats
