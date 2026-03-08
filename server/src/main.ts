@@ -8,13 +8,14 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  app.use('/admin', require('express').static(path.join(__dirname, '..', '..', 'public')));
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: false,
     }),
   );
   app.use('/uploads', require('express').static(path.join(process.cwd(), 'uploads')));
-  app.use('/admin', require('express').static(path.join(__dirname, '..', '..', 'public')));
   app.enableCors({ origin: '*' });
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
