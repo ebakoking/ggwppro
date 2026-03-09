@@ -166,7 +166,7 @@ export default function DiscoverScreen() {
         await swipe(a, effectiveGameIdRef.current);
       } catch (err: any) {
         const msg = err?.message ?? '';
-        if (msg.includes('limit') || msg.includes('swipe') || msg.includes('Günlük')) {
+        if (msg.includes('limit') || msg.includes('like limit') || msg.includes('Günlük')) {
           showLimitAlertRef.current();
         } else {
           Alert.alert('Hata', msg || 'İşlem başarısız oldu.');
@@ -190,7 +190,7 @@ export default function DiscoverScreen() {
   flyRef.current = fly;
 
   const showLimitAlert = useCallback(() => {
-    Alert.alert('Günlük Limit', 'Günlük 30 swipe hakkınız doldu!\nPremium ile sınırsız keşfedin.', [
+    Alert.alert('Günlük Limit', 'Günlük 30 like hakkınız doldu!\nDislike sınırsızdır. Premium ile sınırsız like keşfedin.', [
       { text: 'Premium Al', onPress: () => router.push('/premium' as any) },
       { text: 'Tamam' },
     ]);

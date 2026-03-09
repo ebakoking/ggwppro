@@ -36,7 +36,7 @@ export class SwipeService {
             data: { dailyLikesUsed: { increment: 1 } },
           });
           if (result.count === 0) {
-            throw new BadRequestException('Günlük swipe limitine ulaştınız. Premium ile sınırsız keşfedin!');
+            throw new BadRequestException('Günlük like limitine ulaştınız. Premium ile sınırsız keşfedin!');
           }
         }
       }
