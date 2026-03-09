@@ -17,11 +17,12 @@ import * as SystemUI from 'expo-system-ui';
 import { Colors } from '@/constants/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotifications } from '@/hooks/useNotifications';
+import { connectSocket, disconnectSocket } from '@/services/socket';
 
 SystemUI.setBackgroundColorAsync(Colors.background);
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, accessToken } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
   const [ready, setReady] = useState(false);
@@ -31,6 +32,14 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     useAuthStore.getState().restoreSession().then(() => setReady(true));
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && accessToken) {
+      connectSocket(accessToken);
+    } else {
+      disconnectSocket();
+    }
+  }, [isAuthenticated, accessToken]);
 
   useEffect(() => {
     if (!ready) return;

@@ -13,12 +13,16 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MessageService } from './message.service';
+import { MessageGateway } from './message.gateway';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('messages')
 @UseGuards(JwtAuthGuard)
 export class MessageController {
-  constructor(private messageService: MessageService) {}
+  constructor(
+    private messageService: MessageService,
+    private messageGateway: MessageGateway,
+  ) {}
 
   @Get(':matchId')
   getMessages(
@@ -30,7 +34,7 @@ export class MessageController {
   }
 
   @Post(':matchId')
-  sendMessage(
+  async sendMessage(
     @Param('matchId') matchId: string,
     @Req() req: any,
     @Body() body: { content?: string; messageType?: string; audioUrl?: string },
@@ -39,7 +43,9 @@ export class MessageController {
     const opts = body.audioUrl
       ? { messageType: 'VOICE' as const, audioUrl: body.audioUrl }
       : undefined;
-    return this.messageService.sendMessage(matchId, req.user.id, content, opts);
+    const message = await this.messageService.sendMessage(matchId, req.user.id, content, opts);
+    this.messageGateway.server.to(`match:${matchId}`).emit('newMessage', message);
+    return message;
   }
 
   @Post(':matchId/upload-voice')

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { matchApi, messageApi } from '@/services/api';
+import { getSocket } from '@/services/socket';
 import type { MatchData, Message } from '@/types/api';
 
 const getLocalChatsKey = (userId: string | null) => (userId ? `ggwp_local_chats_${userId}` : null);
@@ -128,10 +129,29 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
   sendMessage: async (matchId, content, opts) => {
     try {
-      const message = await messageApi.sendMessage(matchId, content, opts);
-      set((state) => ({
-        currentMessages: [...state.currentMessages, message],
-      }));
+      if (opts?.audioUrl) {
+        const message = await messageApi.sendMessage(matchId, content, opts);
+        set((state) => ({
+          currentMessages: [...state.currentMessages, message],
+        }));
+        return;
+      }
+
+      const sock = getSocket();
+      if (sock?.connected) {
+        sock.emit('sendMessage', { matchId, content }, (ack: any) => {
+          if (ack?.success && ack.data) {
+            set((state) => ({
+              currentMessages: [...state.currentMessages, ack.data],
+            }));
+          }
+        });
+      } else {
+        const message = await messageApi.sendMessage(matchId, content, opts);
+        set((state) => ({
+          currentMessages: [...state.currentMessages, message],
+        }));
+      }
     } catch (e: any) {
       set({ error: e.message });
     }

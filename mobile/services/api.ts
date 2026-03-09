@@ -304,6 +304,10 @@ export const swipeApi = {
       body: JSON.stringify({ toId, action, gameId }),
     });
   },
+  whoLikedMe(gameId?: string) {
+    const q = gameId ? `?gameId=${gameId}` : '';
+    return request<any[]>(`/swipe/who-liked-me${q}`);
+  },
 };
 
 // ─── Matches ─────────────────────────────────────────

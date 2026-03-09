@@ -6,15 +6,31 @@ import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { notificationApi } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
+import { getActiveChatMatchId } from '@/services/socket';
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  handleNotification: async (notification) => {
+    const data = notification.request.content.data;
+    if (data?.type === 'message' && data?.matchId) {
+      const activeMatch = getActiveChatMatchId();
+      if (activeMatch === data.matchId) {
+        return {
+          shouldShowAlert: false,
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+          shouldShowBanner: false,
+          shouldShowList: false,
+        };
+      }
+    }
+    return {
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    };
+  },
 });
 
 async function getExpoPushToken(): Promise<string | null> {

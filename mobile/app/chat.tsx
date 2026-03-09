@@ -23,6 +23,7 @@ import { useProfileStore } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
 import { getDefaultAvatarUrl } from '@/components/AvatarSelectModal';
 import { messageApi, matchApi, reportApi, UPLOADS_BASE } from '@/services/api';
+import { getSocket, joinMatchRoom, leaveMatchRoom, setActiveChatMatchId } from '@/services/socket';
 
 const QUICK_REPLIES = ['Rank nedir?', 'Hangi oyun?', 'Hadi girelim! 🎮'];
 const REACTIONS = ['🔥', '👍', 'GG'];
@@ -82,7 +83,7 @@ export default function ChatScreen() {
   }>();
 
   const userId = useAuthStore((s) => s.userId);
-  const { currentMessages, isLoading, loadMessages, sendMessage, saveLocalChat, addLocalMessage, getLocalChat, deleteLocalChat } = useMessageStore();
+  const { currentMessages, isLoading, loadMessages, sendMessage, saveLocalChat, addLocalMessage, getLocalChat, deleteLocalChat, addIncomingMessage } = useMessageStore();
   const { profile: myProfile } = useProfileStore();
 
   const [input, setInput] = useState('');
@@ -104,6 +105,22 @@ export default function ChatScreen() {
   useEffect(() => {
     if (matchId) {
       loadMessages(matchId);
+      setActiveChatMatchId(matchId);
+      joinMatchRoom(matchId);
+
+      const sock = getSocket();
+      const onNewMessage = (msg: any) => {
+        if (msg.matchId === matchId && msg.senderId !== userId) {
+          addIncomingMessage(msg);
+        }
+      };
+      sock?.on('newMessage', onNewMessage);
+
+      return () => {
+        sock?.off('newMessage', onNewMessage);
+        leaveMatchRoom(matchId);
+        setActiveChatMatchId(null);
+      };
     } else if (userId) {
       saveLocalChat({
         id: localChatId,

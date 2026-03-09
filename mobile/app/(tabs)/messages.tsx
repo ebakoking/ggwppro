@@ -18,6 +18,7 @@ import { Colors, Fonts } from '@/constants/theme';
 import { useMessageStore } from '@/stores/messageStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
+import { swipeApi } from '@/services/api';
 import { getDefaultAvatarUrl } from '@/components/AvatarSelectModal';
 
 function timeAgo(dateStr: string): string {
@@ -58,12 +59,21 @@ export default function MessagesScreen() {
   const { profile } = useProfileStore();
   const [tab, setTab] = useState<'msg' | 'req'>('msg');
   const isPremium = profile?.isPremium ?? false;
+  const [likedMeList, setLikedMeList] = useState<any[]>([]);
+  const [likedMeLoading, setLikedMeLoading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       loadMatches();
       loadLocalChats(userId);
-    }, [userId]),
+      if (isPremium) {
+        setLikedMeLoading(true);
+        swipeApi.whoLikedMe()
+          .then((data) => setLikedMeList(data))
+          .catch(() => {})
+          .finally(() => setLikedMeLoading(false));
+      }
+    }, [userId, isPremium]),
   );
 
   const newDuos: NewDuo[] = [
@@ -312,10 +322,58 @@ export default function MessagesScreen() {
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
-            ) : (
+            ) : likedMeLoading ? (
+              <View style={s.empty}>
+                <ActivityIndicator size="large" color="#22d3ee" />
+              </View>
+            ) : likedMeList.length === 0 ? (
               <View style={s.empty}>
                 <Ionicons name="people-outline" size={48} color="#4b5563" />
                 <Text style={s.emptyTxt}>Henüz duo isteği yok.</Text>
+              </View>
+            ) : (
+              <View style={s.chatList}>
+                {likedMeList.map((item) => {
+                  const user = item.from;
+                  const prof = user?.profile;
+                  const name = prof?.displayName || user?.username || 'Oyuncu';
+                  const av = getDefaultAvatarUrl(prof ?? null);
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={s.chatCard}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/user-profile',
+                          params: {
+                            userId: user.id,
+                            name,
+                            avatarUrl: av,
+                          },
+                        } as any)
+                      }
+                      activeOpacity={0.7}
+                    >
+                      <View style={s.chatRow}>
+                        <View style={s.chatAvatarWrap}>
+                          <LinearGradient
+                            colors={['#facc15', '#f59e0b']}
+                            style={s.chatAvatarRing}
+                          >
+                            <View style={s.chatAvatarInner}>
+                              <Image source={{ uri: av }} style={s.chatAvatarImg} />
+                            </View>
+                          </LinearGradient>
+                        </View>
+                        <View style={s.chatInfo}>
+                          <Text style={s.chatName}>{name}</Text>
+                          <Text style={s.chatMsg}>Seni beğendi!</Text>
+                        </View>
+                        <Ionicons name="heart" size={20} color="#f43f5e" />
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             )}
           </View>

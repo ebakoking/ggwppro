@@ -52,55 +52,66 @@ export class SwipeService {
     let matchId: string | null = null;
 
     if (action === SwipeAction.LIKE || action === SwipeAction.PENTAKILL) {
-      const genelGame = await this.prisma.gameCatalog.findFirst({
-        where: { slug: 'genel' },
-        select: { id: true },
-      });
-      const gameIds = [gameId];
-      if (genelGame && genelGame.id !== gameId) gameIds.push(genelGame.id);
-
       const reciprocal = await this.prisma.swipe.findFirst({
         where: {
           fromId: toId,
           toId: fromId,
-          gameId: { in: gameIds },
           action: { in: [SwipeAction.LIKE, SwipeAction.PENTAKILL] },
         },
       });
 
       if (reciprocal) {
         const [a, b] = [fromId, toId].sort();
-        const match = await this.prisma.match.upsert({
+        const existingMatch = await this.prisma.match.findFirst({
           where: {
-            userAId_userBId_gameId: { userAId: a, userBId: b, gameId },
+            userAId: a,
+            userBId: b,
           },
-          update: {},
-          create: { userAId: a, userBId: b, gameId },
         });
-        matched = true;
-        matchId = match.id;
 
-        this.notifications
-          .sendPushToMany(
-            [fromId, toId],
-            'Yeni Eşleşme! 🎮',
-            'Birisiyle eşleştin! Hemen sohbete başla.',
-            { type: 'match' },
-          )
-          .catch(() => {});
+        if (!existingMatch) {
+          const match = await this.prisma.match.create({
+            data: { userAId: a, userBId: b, gameId },
+          });
+          matched = true;
+          matchId = match.id;
+
+          this.notifications
+            .sendPushToMany(
+              [fromId, toId],
+              'Yeni Eşleşme! 🎮',
+              'Birisiyle eşleştin! Hemen sohbete başla.',
+              { type: 'match' },
+            )
+            .catch(() => {});
+        } else {
+          matched = true;
+          matchId = existingMatch.id;
+        }
       }
     }
 
     return { swipe, matched, matchId };
   }
 
-  async getWhoLikedMe(userId: string, gameId: string) {
+  async getWhoLikedMe(userId: string, gameId?: string) {
+    const mySwiped = await this.prisma.swipe.findMany({
+      where: { fromId: userId },
+      select: { toId: true },
+    });
+    const swipedIds = mySwiped.map((s) => s.toId);
+
+    const where: any = {
+      toId: userId,
+      action: { in: [SwipeAction.LIKE, SwipeAction.PENTAKILL] },
+    };
+    if (swipedIds.length > 0) {
+      where.fromId = { notIn: swipedIds };
+    }
+    if (gameId) where.gameId = gameId;
+
     return this.prisma.swipe.findMany({
-      where: {
-        toId: userId,
-        gameId,
-        action: { in: [SwipeAction.LIKE, SwipeAction.PENTAKILL] },
-      },
+      where,
       include: {
         from: {
           select: { id: true, username: true, profile: true },

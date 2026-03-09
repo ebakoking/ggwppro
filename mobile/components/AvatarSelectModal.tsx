@@ -106,7 +106,7 @@ export default function AvatarSelectModal({
               ) : (
                 <>
                   <View style={styles.premiumCtaIconRow}>
-                    <Ionicons name="crown" size={28} color="#facc15" />
+                    <Ionicons name="trophy" size={28} color="#facc15" />
                     <Ionicons name="cloud-upload" size={22} color="#fde047" />
                   </View>
                   <Text style={styles.premiumCtaTitle}>
@@ -122,7 +122,7 @@ export default function AvatarSelectModal({
             </TouchableOpacity>
 
             <View style={styles.premiumInfo}>
-              <Ionicons name="crown" size={20} color="#facc15" style={{ marginRight: Spacing.sm }} />
+              <Ionicons name="trophy" size={20} color="#facc15" style={{ marginRight: Spacing.sm }} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.premiumInfoTitle}>
                   {isPremium
