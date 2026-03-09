@@ -69,8 +69,20 @@ export default function MessagesScreen() {
       if (isPremium) {
         setLikedMeLoading(true);
         swipeApi.whoLikedMe()
-          .then((data) => setLikedMeList(data))
-          .catch(() => {})
+          .then((data) => {
+            const seen = new Set<string>();
+            const unique = (data || []).filter((item: any) => {
+              const uid = item.from?.id;
+              if (!uid || seen.has(uid)) return false;
+              seen.add(uid);
+              return true;
+            });
+            setLikedMeList(unique);
+          })
+          .catch((err) => {
+            console.log('[DuoRequests] Error:', err?.message);
+            setLikedMeList([]);
+          })
           .finally(() => setLikedMeLoading(false));
       }
     }, [userId, isPremium]),

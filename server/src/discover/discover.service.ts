@@ -65,11 +65,15 @@ export class DiscoverService {
 
     if (candidates.length === 0) return [];
 
+    const hasGenderFilter = !!myProfile?.filterGender;
+    const hasAgeFilter = myProfile?.filterAgeMin != null && myProfile?.filterAgeMax != null
+      && !(myProfile.filterAgeMin <= 18 && myProfile.filterAgeMax >= 50);
+    const hasMicFilter = !!myProfile?.filterMicOnly;
+    const hasPlayStyleFilter = myProfile?.filterPlayStyles && myProfile.filterPlayStyles.length > 0;
+    const hasActivityFilter = myProfile?.filterActivity && myProfile.filterActivity !== 'FARKETMEZ';
+
     const hasPremiumFilters = myProfile?.isPremium && (
-      myProfile.filterGender || myProfile.filterAgeMin != null ||
-      myProfile.filterAgeMax != null || myProfile.filterMicOnly ||
-      (myProfile.filterPlayStyles && myProfile.filterPlayStyles.length > 0) ||
-      myProfile.filterActivity
+      hasGenderFilter || hasAgeFilter || hasMicFilter || hasPlayStyleFilter || hasActivityFilter
     );
 
     const playStyleMap: Record<string, string> = {
@@ -81,19 +85,19 @@ export class DiscoverService {
 
     const filtered = hasPremiumFilters
       ? candidates.filter((c) => {
-          if (myProfile.filterGender) {
-            const wanted = this.genderMap[myProfile.filterGender] || myProfile.filterGender;
+          if (hasGenderFilter) {
+            const wanted = this.genderMap[myProfile.filterGender!] || myProfile.filterGender;
             if (!c.gender || c.gender !== wanted) return false;
           }
-          if (myProfile.filterAgeMin != null || myProfile.filterAgeMax != null) {
+          if (hasAgeFilter) {
             if (!c.dateOfBirth) return false;
             const age = this.getAge(c.dateOfBirth);
             if (myProfile.filterAgeMin != null && age < myProfile.filterAgeMin) return false;
-            if (myProfile.filterAgeMax != null && myProfile.filterAgeMax < 50 && age > myProfile.filterAgeMax) return false;
+            if (myProfile.filterAgeMax != null && age > myProfile.filterAgeMax) return false;
           }
-          if (myProfile.filterMicOnly && !c.usesMic) return false;
-          if (myProfile.filterPlayStyles && myProfile.filterPlayStyles.length > 0) {
-            const mapped = myProfile.filterPlayStyles.map((s) => playStyleMap[s] || s);
+          if (hasMicFilter && !c.usesMic) return false;
+          if (hasPlayStyleFilter) {
+            const mapped = myProfile.filterPlayStyles!.map((s) => playStyleMap[s] || s);
             if (!c.playStyle || !mapped.includes(c.playStyle)) return false;
           }
           return true;

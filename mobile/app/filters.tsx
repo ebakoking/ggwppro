@@ -68,14 +68,15 @@ export default function FiltersScreen() {
   const handleSave = async () => {
     setLoading(true);
     try {
+      const isDefaultAge = ageMin <= 18 && ageMax >= 50;
       await profileApi.saveFilters({
-        filterGender: gender ?? undefined,
-        filterAgeMin: ageMin,
-        filterAgeMax: ageMax,
+        filterGender: gender || null,
+        filterAgeMin: isDefaultAge ? null : ageMin,
+        filterAgeMax: isDefaultAge ? null : ageMax,
         filterMicOnly: micOnly,
         filterPlayStyles: playStyles,
-        filterActivity: activity,
-      });
+        filterActivity: activity === 'FARKETMEZ' ? null : activity,
+      } as any);
       await fetchProfile();
       router.back();
     } catch (e: any) {

@@ -110,7 +110,7 @@ export class SwipeService {
     }
     if (gameId) where.gameId = gameId;
 
-    return this.prisma.swipe.findMany({
+    const swipes = await this.prisma.swipe.findMany({
       where,
       include: {
         from: {
@@ -118,6 +118,13 @@ export class SwipeService {
         },
       },
       orderBy: { createdAt: 'desc' },
+    });
+
+    const seen = new Set<string>();
+    return swipes.filter((s) => {
+      if (seen.has(s.fromId)) return false;
+      seen.add(s.fromId);
+      return true;
     });
   }
 }

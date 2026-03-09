@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, FontSize, Spacing, BorderRadius } from '@/constants/theme';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useDiscoverStore } from '@/stores/discoverStore';
 import { useGameStore } from '@/stores/gameStore';
 import { useProfileStore } from '@/stores/profileStore';
@@ -89,8 +90,14 @@ export default function DiscoverScreen() {
   const effectiveGameIdRef = useRef(effectiveGameId);
   effectiveGameIdRef.current = effectiveGameId;
 
-  useEffect(() => { loadMyGames(); loadCatalog(); fetchProfile(); }, []);
-  useEffect(() => { loadFeed(primaryGameId); }, [myGames.length, primaryGameId]);
+  useEffect(() => { loadMyGames(); loadCatalog(); }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+      loadFeed(effectiveGameId);
+    }, [effectiveGameId]),
+  );
   useEffect(() => {
     if (!userId) return;
     const mergeHidden = (stored: string[]) => {
