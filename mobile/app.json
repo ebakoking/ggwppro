@@ -2,7 +2,7 @@
   "expo": {
     "name": "GGWP",
     "slug": "ggwp",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.ggwp.app",
-      "buildNumber": "12",
+      "buildNumber": "13",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Ses mesajı kaydetmek için mikrofon erişimi gereklidir.",
         "NSCameraUsageDescription": "Profil fotoğrafı çekmek için kamera erişimi gereklidir.",
