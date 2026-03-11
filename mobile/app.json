@@ -28,7 +28,14 @@
         "backgroundColor": "#0A0E1A",
         "foregroundImage": "./assets/android-icon-foreground.png"
       },
-      "package": "com.ggwp.app"
+      "package": "com.ggwp.app",
+      "versionCode": 1,
+      "permissions": [
+        "RECORD_AUDIO",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
